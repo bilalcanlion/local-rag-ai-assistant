@@ -1,0 +1,5 @@
+Local RAG AI Assistant, kullanıcının sorularını yerel dokümanlardan cevaplayan bir yapay zeka asistanıdır.
+
+RAG, Retrieval-Augmented Generation anlamına gelir. Önce ilgili bilgi dokümanlardan bulunur, sonra bu bilgi yapay zeka modeline bağlam olarak verilir.
+
+Bu projenin amacı internet bağlantısı olmadan çalışan basit bir soru-cevap sistemi geliştirmektir.
