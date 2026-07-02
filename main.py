@@ -2,7 +2,7 @@ from pathlib import Path
 
 from database import create_tables, clear_chunks, save_chunks
 from ingest import read_document, split_into_chunks
-from rag import find_best_chunk
+from rag import find_top_chunks
 
 
 DATA_PATH = Path("data") / "sample_doc.txt"
@@ -42,13 +42,15 @@ def ask_questions():
             print("Lütfen boş olmayan bir soru yazın.")
             continue
 
-        result = find_best_chunk(question)
+        results = find_top_chunks(question)
 
-        if result:
-            print("\n=== Cevap İçin Bulunan Kaynak Parça ===")
-            print(result["content"])
-            print("\nKaynak Parça ID:", result["id"])
-            print("Skor:", result["score"])
+        if results:
+            print("\n=== Cevap İçin Bulunan Kaynak Parçalar ===")
+
+            for result in results:
+                print(f"\n--- Kaynak Parça ID: {result['id']} ---")
+                print("Skor:", result["score"])
+                print(result["content"])
         else:
             print("Bu soruyla ilgili bir bilgi bulunamadı.")
 
