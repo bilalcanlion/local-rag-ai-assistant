@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from database import create_tables, clear_chunks, save_chunks, get_all_chunks
+
 
 DATA_PATH = Path("data") / "sample_doc.txt"
 
@@ -29,17 +31,22 @@ def split_into_chunks(text):
 
 def main():
     document_text = read_document(DATA_PATH)
-
     chunks = split_into_chunks(document_text)
 
-    print("=== Doküman Parçaları ===")
+    create_tables()
+    clear_chunks()
+    save_chunks(chunks)
 
-    for index, chunk in enumerate(chunks, start=1):
-        print(f"\n--- Parça {index} ---")
-        print(chunk)
+    saved_chunks = get_all_chunks()
+
+    print("=== Veritabanına Kaydedilen Parçalar ===")
+
+    for chunk_id, content in saved_chunks:
+        print(f"\n--- Parça ID: {chunk_id} ---")
+        print(content)
 
     print("\n=== Bilgi ===")
-    print("Toplam parça sayısı:", len(chunks))
+    print("Kaydedilen parça sayısı:", len(saved_chunks))
 
 
 if __name__ == "__main__":
