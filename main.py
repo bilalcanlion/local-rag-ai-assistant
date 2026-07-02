@@ -27,6 +27,27 @@ def prepare_database():
     return True
 
 
+def create_basic_answer(results):
+    if not results:
+        return "Bu soruyla ilgili bir bilgi bulunamadı."
+
+    best_result = results[0]
+
+    answer = (
+        "Dokümanlara göre: "
+        + best_result["content"]
+    )
+
+    return answer
+
+
+def print_sources(results):
+    print("\nKaynaklar:")
+
+    for result in results:
+        print(f"- Parça ID: {result['id']} | Skor: {result['score']}")
+
+
 def ask_questions():
     print("\nLocal RAG AI Assistant çalışıyor.")
     print("Çıkmak için q yazabilirsiniz.")
@@ -44,15 +65,12 @@ def ask_questions():
 
         results = find_top_chunks(question)
 
-        if results:
-            print("\n=== Cevap İçin Bulunan Kaynak Parçalar ===")
+        print("\n=== Cevap ===")
+        answer = create_basic_answer(results)
+        print(answer)
 
-            for result in results:
-                print(f"\n--- Kaynak Parça ID: {result['id']} ---")
-                print("Skor:", result["score"])
-                print(result["content"])
-        else:
-            print("Bu soruyla ilgili bir bilgi bulunamadı.")
+        if results:
+            print_sources(results)
 
 
 def main():
