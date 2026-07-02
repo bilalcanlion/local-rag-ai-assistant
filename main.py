@@ -36,17 +36,6 @@ def create_basic_answer(results):
     )
 
     return answer
-    if not results:
-        return "Bu soruyla ilgili bir bilgi bulunamadı."
-
-    best_result = results[0]
-
-    answer = (
-        "Dokümanlara göre: "
-        + best_result["content"]
-    )
-
-    return answer
 
 
 def print_sources(results):
@@ -56,7 +45,7 @@ def print_sources(results):
         print(
             f"- Dosya: {result['source']} | "
             f"Parça ID: {result['id']} | "
-            f"Skor: {result['score']}"
+            f"Benzerlik: {round(result['similarity'], 3)}"
         )
 
 

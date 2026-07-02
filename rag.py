@@ -1,62 +1,35 @@
-import re
-
 from database import get_all_chunks
+from embeddings import build_vocabulary, text_to_vector, cosine_similarity
 
 
-def tokenize(text):
-    return re.findall(r"\b\w+\b", text.lower())
-
-
-def simple_score(query, text):
-    query_words = set(tokenize(query))
-    text_words = set(tokenize(text))
-
-    score = 0
-
-    for word in query_words:
-        if word in text_words:
-            score += 2
-        elif any(word in text_word or text_word in word for text_word in text_words):
-            score += 1
-
-    return score
-
-
-def find_top_chunks(query, top_k=3, min_score=2):
+def find_top_chunks(query, top_k=3, min_similarity=0.1):
     chunks = get_all_chunks()
-    scored_chunks = []
+
+    if not chunks:
+        return []
+
+    texts = [content for _, _, content in chunks]
+    vocabulary = build_vocabulary(texts + [query])
+
+    query_vector = text_to_vector(query, vocabulary)
+
+    results = []
 
     for chunk_id, source, content in chunks:
-        score = simple_score(query, content)
+        chunk_vector = text_to_vector(content, vocabulary)
+        similarity = cosine_similarity(query_vector, chunk_vector)
 
-        if score >= min_score:
-            scored_chunks.append({
+        if similarity >= min_similarity:
+            results.append({
                 "id": chunk_id,
                 "source": source,
                 "content": content,
-                "score": score
+                "similarity": similarity
             })
 
-    scored_chunks.sort(key=lambda item: item["score"], reverse=True)
+    results.sort(key=lambda item: item["similarity"], reverse=True)
 
-    return scored_chunks[:top_k]
-    chunks = get_all_chunks()
-    scored_chunks = []
-
-    for chunk_id, source, content in chunks:
-        score = simple_score(query, content)
-
-        if score > 0:
-            scored_chunks.append({
-                "id": chunk_id,
-                "source": source,
-                "content": content,
-                "score": score
-            })
-
-    scored_chunks.sort(key=lambda item: item["score"], reverse=True)
-
-    return scored_chunks[:top_k]
+    return results[:top_k]
 
 
 def find_best_chunk(query):
@@ -74,12 +47,12 @@ if __name__ == "__main__":
     results = find_top_chunks(question)
 
     if results:
-        print("\n=== En Alakalı Parçalar ===")
+        print("\n=== En Benzer Parçalar ===")
 
         for result in results:
             print(f"\n--- Parça ID: {result['id']} ---")
             print("Kaynak dosya:", result["source"])
-            print("Skor:", result["score"])
+            print("Benzerlik:", round(result["similarity"], 3))
             print(result["content"])
     else:
-        print("Bu soruyla ilgili bir bilgi bulunamadı.")
+        print("Bu bilgi mevcut dokümanlarda bulunamadı.")
