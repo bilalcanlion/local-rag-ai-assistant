@@ -13,14 +13,33 @@ def read_document(file_path):
     return text
 
 
+def split_into_chunks(text):
+    chunks = []
+
+    paragraphs = text.split("\n\n")
+
+    for paragraph in paragraphs:
+        clean_paragraph = paragraph.strip()
+
+        if clean_paragraph:
+            chunks.append(clean_paragraph)
+
+    return chunks
+
+
 def main():
     document_text = read_document(DATA_PATH)
 
-    print("=== Doküman İçeriği ===")
-    print(document_text)
+    chunks = split_into_chunks(document_text)
+
+    print("=== Doküman Parçaları ===")
+
+    for index, chunk in enumerate(chunks, start=1):
+        print(f"\n--- Parça {index} ---")
+        print(chunk)
 
     print("\n=== Bilgi ===")
-    print("Karakter sayısı:", len(document_text))
+    print("Toplam parça sayısı:", len(chunks))
 
 
 if __name__ == "__main__":
