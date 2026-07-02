@@ -26,6 +26,17 @@ def prepare_database():
 
 def create_basic_answer(results):
     if not results:
+        return "Bu bilgi mevcut dokümanlarda bulunamadı."
+
+    best_result = results[0]
+
+    answer = (
+        "Dokümanlara göre: "
+        + best_result["content"]
+    )
+
+    return answer
+    if not results:
         return "Bu soruyla ilgili bir bilgi bulunamadı."
 
     best_result = results[0]

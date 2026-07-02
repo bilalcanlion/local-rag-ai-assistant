@@ -22,7 +22,24 @@ def simple_score(query, text):
     return score
 
 
-def find_top_chunks(query, top_k=3):
+def find_top_chunks(query, top_k=3, min_score=2):
+    chunks = get_all_chunks()
+    scored_chunks = []
+
+    for chunk_id, source, content in chunks:
+        score = simple_score(query, content)
+
+        if score >= min_score:
+            scored_chunks.append({
+                "id": chunk_id,
+                "source": source,
+                "content": content,
+                "score": score
+            })
+
+    scored_chunks.sort(key=lambda item: item["score"], reverse=True)
+
+    return scored_chunks[:top_k]
     chunks = get_all_chunks()
     scored_chunks = []
 
