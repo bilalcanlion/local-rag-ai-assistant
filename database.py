@@ -31,10 +31,10 @@ def clear_chunks():
     cursor = connection.cursor()
 
     cursor.execute("DELETE FROM chunks")
+    cursor.execute("DELETE FROM sqlite_sequence WHERE name='chunks'")
 
     connection.commit()
     connection.close()
-
 
 def save_chunks(chunks):
     connection = get_connection()
