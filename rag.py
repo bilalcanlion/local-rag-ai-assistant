@@ -26,12 +26,13 @@ def find_top_chunks(query, top_k=3):
     chunks = get_all_chunks()
     scored_chunks = []
 
-    for chunk_id, content in chunks:
+    for chunk_id, source, content in chunks:
         score = simple_score(query, content)
 
         if score > 0:
             scored_chunks.append({
                 "id": chunk_id,
+                "source": source,
                 "content": content,
                 "score": score
             })
@@ -60,6 +61,7 @@ if __name__ == "__main__":
 
         for result in results:
             print(f"\n--- Parça ID: {result['id']} ---")
+            print("Kaynak dosya:", result["source"])
             print("Skor:", result["score"])
             print(result["content"])
     else:

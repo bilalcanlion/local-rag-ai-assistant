@@ -1,0 +1,5 @@
+Bu asistan, kullanıcının sorusuna göre yerel dokümanlar içinde arama yapar.
+
+SQLite, doküman parçalarını saklamak için kullanılan hafif bir yerel veritabanıdır.
+
+Bu proje ileride Microsoft Foundry Local ile birleştirilerek yerel yapay zeka modeliyle cevap üretecektir.

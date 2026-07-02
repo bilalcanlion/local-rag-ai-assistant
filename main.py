@@ -1,24 +1,21 @@
 from pathlib import Path
 
-from database import create_tables, clear_chunks, save_chunks
-from ingest import read_document, split_into_chunks
+from database import create_tables, save_chunks
+from ingest import load_all_chunks
 from rag import find_top_chunks
 
 
-DATA_PATH = Path("data") / "sample_doc.txt"
+DATA_DIR = Path("data")
 
 
 def prepare_database():
-    document_text = read_document(DATA_PATH)
+    chunks = load_all_chunks(DATA_DIR)
 
-    if not document_text:
-        print("Doküman okunamadı.")
+    if not chunks:
+        print("Hiç doküman parçası bulunamadı.")
         return False
 
-    chunks = split_into_chunks(document_text)
-
     create_tables()
-    clear_chunks()
     save_chunks(chunks)
 
     print("Veritabanı hazırlandı.")
@@ -45,7 +42,11 @@ def print_sources(results):
     print("\nKaynaklar:")
 
     for result in results:
-        print(f"- Parça ID: {result['id']} | Skor: {result['score']}")
+        print(
+            f"- Dosya: {result['source']} | "
+            f"Parça ID: {result['id']} | "
+            f"Skor: {result['score']}"
+        )
 
 
 def ask_questions():

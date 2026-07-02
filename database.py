@@ -15,9 +15,12 @@ def create_tables():
     connection = get_connection()
     cursor = connection.cursor()
 
+    cursor.execute("DROP TABLE IF EXISTS chunks")
+
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS chunks (
+        CREATE TABLE chunks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            source TEXT NOT NULL,
             content TEXT NOT NULL
         )
     """)
@@ -26,24 +29,14 @@ def create_tables():
     connection.close()
 
 
-def clear_chunks():
-    connection = get_connection()
-    cursor = connection.cursor()
-
-    cursor.execute("DELETE FROM chunks")
-    cursor.execute("DELETE FROM sqlite_sequence WHERE name='chunks'")
-
-    connection.commit()
-    connection.close()
-
 def save_chunks(chunks):
     connection = get_connection()
     cursor = connection.cursor()
 
     for chunk in chunks:
         cursor.execute(
-            "INSERT INTO chunks (content) VALUES (?)",
-            (chunk,)
+            "INSERT INTO chunks (source, content) VALUES (?, ?)",
+            (chunk["source"], chunk["content"])
         )
 
     connection.commit()
@@ -54,7 +47,7 @@ def get_all_chunks():
     connection = get_connection()
     cursor = connection.cursor()
 
-    cursor.execute("SELECT id, content FROM chunks")
+    cursor.execute("SELECT id, source, content FROM chunks")
     rows = cursor.fetchall()
 
     connection.close()
