@@ -1,0 +1,7 @@
+Microsoft Foundry Local, yapay zeka modellerini kullanıcının kendi cihazında çalıştırmayı sağlayan yerel bir model çalışma ortamıdır.
+
+Foundry Local ile embedding modelleri ve chat modelleri internet bağlantısına ihtiyaç duymadan çalıştırılabilir.
+
+Bu projede Foundry Local, doküman parçalarının embedding vektörlerini üretmek ve yerel chat modeliyle cevap oluşturmak için kullanılmaktadır.
+
+Yerel model kullanımı, verilerin dış servislere gönderilmeden bilgisayar üzerinde işlenmesine yardımcı olur.

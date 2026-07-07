@@ -1,0 +1,7 @@
+Eğer Foundry veritabanında kayıtlı doküman parçası bulunamadı hatası alınırsa, önce python foundry_ingest_test.py komutu çalıştırılmalıdır.
+
+Eğer model yavaş cevap veriyorsa, modellerin her soru için yeniden yüklenmediğinden emin olunmalıdır. Final uygulamada modeller başlangıçta bir kez yüklenir ve çıkışta kapatılır.
+
+Eğer sistem yanlış kaynak getiriyorsa, doküman içeriği kontrol edilmeli ve gerekirse query expansion kuralları geliştirilmelidir.
+
+Eğer bilgi dokümanlarda yoksa sistem cevap uydurmamalı ve Bu bilgi mevcut dokümanlarda bulunamadı cevabını vermelidir.

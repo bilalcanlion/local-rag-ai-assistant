@@ -19,6 +19,44 @@ def expand_query(query):
         expanded_query += " SQLite veritabanı doküman parçalarını saklamak"
 
     if "rag" in query_lower:
+        expanded_query += " Retrieval-Augmented Generation anlamına gelir doküman bilgi bağlam halüsinasyon azaltır"
+
+    if "yapay zeka" in query_lower:
+        expanded_query += " bilgisayar sistemleri insan benzeri görevler metin anlama soru cevaplama sınıflandırma tahmin"
+
+    if "halüsinasyon" in query_lower or "halusinasyon" in query_lower:
+        expanded_query += " kaynak bağlam doküman bilgi uydurma riskini azaltır"
+
+    if "internet" in query_lower or "offline" in query_lower or "çevrimdışı" in query_lower:
+        expanded_query += " internet bağlantısına ihtiyaç duymadan yerel cihaz üzerinde çalışır"
+
+    if (
+        "kayıtlı parça" in query_lower
+        or "kayıtlı doküman" in query_lower
+        or "veritabanında kayıtlı" in query_lower
+        or "parça yoksa" in query_lower
+        or "bulunamadı hatası" in query_lower
+        or "ne yapmalıyım" in query_lower
+    ):
+        expanded_query += " Foundry veritabanında kayıtlı doküman parçası bulunamadı hatası python foundry_ingest_test.py komutu çalıştırılmalıdır troubleshooting faq"
+
+    if "ne demek" in query_lower or "nedir" in query_lower:
+        expanded_query += " anlam tanım açıklama"
+
+    if "ne işe yarar" in query_lower or "ne için" in query_lower:
+        expanded_query += " kullanım amacı görev"
+
+    return expanded_query
+    expanded_query = query
+    query_lower = query.lower()
+
+    if "foundry" in query_lower:
+        expanded_query += " Microsoft Foundry Local yerel yapay zeka modeli cevap üretecektir"
+
+    if "sqlite" in query_lower:
+        expanded_query += " SQLite veritabanı doküman parçalarını saklamak"
+
+    if "rag" in query_lower:
         expanded_query += " Retrieval-Augmented Generation anlamına gelir doküman bilgi bağlam"
 
     if "ne demek" in query_lower or "nedir" in query_lower:

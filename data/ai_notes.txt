@@ -1,0 +1,7 @@
+Yapay zeka, bilgisayar sistemlerinin insan benzeri görevleri yerine getirmesini sağlayan bir çalışma alanıdır. Bu görevler arasında metin anlama, soru cevaplama, sınıflandırma ve tahmin yapma bulunur.
+
+Büyük dil modelleri, çok miktarda metin verisi üzerinde eğitilen ve kullanıcıdan gelen metinlere cevap üretebilen yapay zeka modelleridir.
+
+RAG sistemleri, büyük dil modellerinin cevaplarını yalnızca modelin eğitim bilgisine bırakmak yerine harici dokümanlardan bulunan bilgilerle destekler.
+
+RAG yaklaşımı, halüsinasyon riskini azaltmaya yardımcı olur çünkü model cevap üretirken verilen kaynak bağlamını kullanır.
