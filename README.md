@@ -31,6 +31,8 @@ Sistem internet bağlantısına ihtiyaç duymadan yerel dokümanlardan bilgi ara
 - Embedding ve chat modelleri uygulama başında bir kez yükleniyor
 - Program kapatılırken modeller güvenli şekilde kapatılıyor
 - Etkileşimli Foundry tabanlı uygulama `python foundry_app.py` komutu ile çalışıyor
+- Final proje raporu hazırlandı
+- Demo çıktı dokümantasyonu hazırlandı
 
 ## Proje Yapısı
 
@@ -43,7 +45,9 @@ local-rag-ai-assistant/
 │   ├── project_notes.md
 │   ├── test_results.md
 │   ├── foundry_notes.md
-│   └── foundry_test_results.md
+│   ├── foundry_test_results.md
+│   ├── final_report.md
+│   └── demo_output.md
 ├── database.py
 ├── embeddings.py
 ├── foundry_app.py
@@ -77,6 +81,7 @@ local-rag-ai-assistant/
 - Cosine similarity
 - Query expansion
 - Retrieval-Augmented Generation
+- GitHub
 
 ## Kurulum
 
@@ -361,6 +366,17 @@ Final uygulamayı çalıştırmak için:
 python foundry_app.py
 ```
 
+## Dokümantasyon Dosyaları
+
+| Dosya                          | Açıklama                                      |
+| ------------------------------ | --------------------------------------------- |
+| `docs/project_notes.md`        | Proje geliştirme notlarını içerir             |
+| `docs/test_results.md`         | İlk test sonuçlarını içerir                   |
+| `docs/foundry_notes.md`        | Foundry Local entegrasyon notlarını içerir    |
+| `docs/foundry_test_results.md` | Foundry test sonuçlarını içerir               |
+| `docs/final_report.md`         | Final proje raporunu içerir                   |
+| `docs/demo_output.md`          | Final uygulamanın örnek demo çıktısını içerir |
+
 ## Dosyaların Görevleri
 
 | Dosya                        | Görevi                                                                      |
@@ -383,7 +399,7 @@ python foundry_app.py
 | `list_foundry_models.py`     | Foundry Local model kataloğundaki modelleri listeler                        |
 | `test_queries.py`            | Basit retrieval testlerini çalıştırır                                       |
 | `data/`                      | Sistemin cevap verirken kullanacağı dokümanları içerir                      |
-| `docs/`                      | Proje notlarını ve test sonuçlarını içerir                                  |
+| `docs/`                      | Proje notlarını, test sonuçlarını, final raporu ve demo çıktısını içerir    |
 
 ## Tamamlanan Aşamalar
 
@@ -408,6 +424,8 @@ python foundry_app.py
 - Foundry app hızlandırıldı
 - Modellerin her soruda yeniden yüklenmesi yerine başlangıçta bir kez yüklenmesi sağlandı
 - Program kapanırken modellerin güvenli şekilde kapatılması sağlandı
+- Final proje raporu hazırlandı
+- Demo çıktı dokümantasyonu hazırlandı
 
 ## Şu Anki Sınırlamalar
 
@@ -426,11 +444,13 @@ python foundry_app.py
 - Daha fazla test senaryosu eklemek
 - Daha iyi değerlendirme metrikleri oluşturmak
 - Basit bir web arayüzü eklemek
-- README içine ekran görüntüsü veya demo çıktısı eklemek
-- Final proje raporu hazırlamak
+- README içine ekran görüntüsü eklemek
+- Final sunum dosyası hazırlamak
 
 ## Proje Özeti
 
 Local RAG AI Assistant, yerel dokümanlardan bilgi bulup bu bilgileri yerel yapay zeka modeliyle cevap haline getiren bir RAG uygulamasıdır.
 
 Proje eğitim amaçlı basit bir retrieval sistemiyle başlamış, daha sonra Microsoft Foundry Local ile embedding üretimi, SQLite tabanlı vektör saklama, kaynak bulma, yerel LLM ile cevap üretme ve hızlandırılmış model yükleme aşamalarına kadar geliştirilmiştir.
+
+Final durumda proje; çalışan uygulama, güncel README, final rapor ve demo çıktısı dokümantasyonu ile sunuma hazır hale gelmiştir.
