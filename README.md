@@ -1,14 +1,14 @@
 # Local RAG AI Assistant
 
-Bu proje, yerel dokümanlardan bilgi bulabilen basit bir RAG tabanlı soru-cevap asistanıdır.
+Bu proje, yerel dokümanlardan bilgi bulabilen ve bu bilgileri yerel bir yapay zeka modeliyle cevap haline getirebilen RAG tabanlı bir soru-cevap asistanıdır.
 
-Proje, önce eğitim amaçlı basit vektör benzerliği ile başlamış; daha sonra Microsoft Foundry Local embedding modeli kullanılarak gerçek embedding tabanlı yerel retrieval sistemine dönüştürülmüştür.
+Proje önce eğitim amaçlı basit vektör benzerliği ile başlamış, daha sonra Microsoft Foundry Local kullanılarak gerçek embedding tabanlı yerel retrieval sistemine ve yerel LLM destekli cevap üretimine dönüştürülmüştür.
 
 ## Projenin Amacı
 
-Bu projenin amacı, kullanıcının sorduğu soruya göre yerel dokümanlar içinden en alakalı bilgi parçalarını bulabilen bir sistem geliştirmektir.
+Bu projenin amacı, kullanıcının sorduğu soruya göre yerel dokümanlar içinden en alakalı bilgi parçalarını bulmak ve bu parçaları kullanarak kısa, kaynaklı ve anlaşılır cevaplar üretmektir.
 
-Sistem, internet bağlantısına ihtiyaç duymadan yerel dokümanlardan bilgi aramaya hazırlanmıştır. Microsoft Foundry Local ile cihaz üzerinde embedding üretilerek daha gerçekçi bir RAG altyapısı kurulmuştur.
+Sistem internet bağlantısına ihtiyaç duymadan yerel dokümanlardan bilgi arayacak şekilde tasarlanmıştır. Microsoft Foundry Local ile cihaz üzerinde embedding üretilir, SQLite içinde saklanan embeddinglerle karşılaştırma yapılır ve bulunan kaynak parçalar yerel chat modeline bağlam olarak verilir.
 
 ## Şu Anki Özellikler
 
@@ -16,7 +16,7 @@ Sistem, internet bağlantısına ihtiyaç duymadan yerel dokümanlardan bilgi ar
 - `data` klasöründeki birden fazla `.txt` dosyası okunabiliyor
 - Dokümanlar paragraflara ayrılıyor
 - Parçalar SQLite veritabanına kaydediliyor
-- Basit vektör benzerliği ile arama yapılabiliyor
+- Eğitim amaçlı basit vektör benzerliği ile arama yapılabiliyor
 - Query expansion ile bazı soru tipleri daha doğru eşleştiriliyor
 - Microsoft Foundry Local SDK kurulumu test edildi
 - Foundry Local ile gerçek embedding üretildi
@@ -24,6 +24,8 @@ Sistem, internet bağlantısına ihtiyaç duymadan yerel dokümanlardan bilgi ar
 - Kullanıcı sorusu Foundry Local ile embedding vektörüne çevriliyor
 - SQLite’taki kayıtlı embeddinglerle karşılaştırma yapılıyor
 - En alakalı kaynak parçalar bulunuyor
+- Bulunan kaynak parçalar yerel LLM modeline bağlam olarak veriliyor
+- `phi-4-mini` modeli ile doğal cevap üretimi yapılıyor
 - Cevapta kaynak dosya adı, parça ID, benzerlik ve final skor gösteriliyor
 - Bilgi dokümanlarda yoksa sistem cevap uydurmuyor
 - Etkileşimli Foundry tabanlı uygulama `python foundry_app.py` komutu ile çalışıyor
@@ -43,13 +45,16 @@ local-rag-ai-assistant/
 ├── database.py
 ├── embeddings.py
 ├── foundry_app.py
+├── foundry_chat_test.py
 ├── foundry_database.py
 ├── foundry_embedding_test.py
 ├── foundry_embeddings.py
 ├── foundry_ingest_test.py
+├── foundry_rag_answer_test.py
 ├── foundry_retrieval_test.py
 ├── foundry_search_test.py
 ├── ingest.py
+├── list_foundry_models.py
 ├── main.py
 ├── rag.py
 ├── requirements.txt
@@ -57,6 +62,18 @@ local-rag-ai-assistant/
 ├── README.md
 └── .gitignore
 ```
+
+## Kullanılan Teknolojiler
+
+- Python
+- SQLite
+- Microsoft Foundry Local
+- Foundry Local SDK
+- Yerel embedding modeli: `qwen3-embedding-0.6b`
+- Yerel chat modeli: `phi-4-mini`
+- Cosine similarity
+- Query expansion
+- Retrieval-Augmented Generation
 
 ## Kurulum
 
@@ -95,6 +112,16 @@ Embedding başarıyla üretildi.
 Vektör boyutu: 1024
 ```
 
+## Foundry Chat Modeli Testi
+
+Yerel chat modelinin cevap üretmesini test etmek için:
+
+```bash
+python foundry_chat_test.py
+```
+
+Bu testte en iyi sonucu `phi-4-mini` modeli vermiştir.
+
 ## Foundry Embeddingleri SQLite’a Kaydetme
 
 Doküman parçalarını Foundry Local embedding modelinden geçirip SQLite’a kaydetmek için:
@@ -115,7 +142,27 @@ Her parça için Foundry Local embedding üretir
 Embeddingleri SQLite veritabanına kaydeder
 ```
 
-## Foundry Tabanlı Etkileşimli Uygulama
+## Foundry Retrieval Testi
+
+SQLite’a kaydedilmiş embeddinglerle arama testini çalıştırmak için:
+
+```bash
+python foundry_retrieval_test.py
+```
+
+Bu testte sistem, kullanıcının sorusunu embedding vektörüne çevirir ve SQLite içinde kayıtlı doküman embeddingleriyle karşılaştırır.
+
+## RAG + LLM Cevap Üretimi Testi
+
+Retrieval sonucunda bulunan kaynakları yerel LLM modeline verip cevap üretimini test etmek için:
+
+```bash
+python foundry_rag_answer_test.py
+```
+
+Bu test, final uygulamaya geçmeden önce kaynak bulma ve LLM cevap üretme adımının birlikte çalıştığını doğrulamak için kullanılmıştır.
+
+## Final Foundry Tabanlı Etkileşimli Uygulama
 
 Asıl Foundry tabanlı uygulamayı çalıştırmak için:
 
@@ -142,32 +189,30 @@ q
 
 yazabilirsiniz.
 
-## Çalışma Mantığı
+## Final Uygulamanın Çalışma Mantığı
 
 ```text
-data klasöründeki dokümanları oku
-↓
-Dokümanları küçük parçalara böl
-↓
-Foundry Local ile her parçanın embedding vektörünü üret
-↓
-Embeddingleri SQLite veritabanına kaydet
-↓
 Kullanıcıdan soru al
 ↓
 Soruyu query expansion ile güçlendir
 ↓
-Soruyu Foundry Local ile embedding vektörüne çevir
+Soruyu Foundry Local embedding modeline gönder
 ↓
-SQLite’taki kayıtlı doküman embeddingleriyle karşılaştır
+Soru embedding vektörüne çevrilir
 ↓
-Cosine similarity ile en alakalı parçaları bul
+SQLite’taki kayıtlı doküman embeddingleri alınır
 ↓
-Final skor ile sonuçları sırala
+Cosine similarity ile en alakalı parçalar bulunur
 ↓
-En iyi parçaya göre cevap göster
+Final skor ile sonuçlar sıralanır
 ↓
-Kaynak dosya, parça ID, benzerlik ve final skor bilgisini yazdır
+En iyi kaynak parçalar bağlam olarak hazırlanır
+↓
+Bağlam phi-4-mini yerel chat modeline verilir
+↓
+LLM kısa bir cevap üretir
+↓
+Kaynak dosya, parça ID, benzerlik ve final skor gösterilir
 ```
 
 ## Kullanılan Temel Kavramlar
@@ -210,16 +255,32 @@ Final skor = Benzerlik + Anahtar kelime bonusu
 
 Bu yöntem, önemli kelimeler soru ve doküman parçasında birlikte geçiyorsa doğru parçanın daha üst sıraya çıkmasına yardımcı olur.
 
+### Yerel LLM
+
+Yerel LLM, cevap üretimini internet üzerinden değil, bilgisayarda çalışan yerel model üzerinden yapar.
+
+Bu projede cevap üretimi için `phi-4-mini` modeli kullanılmıştır.
+
 ## Örnek Çıktı
 
 ```text
 Sorunuzu yazın: RAG ne demek?
 
-=== Cevap ===
-Dokümanlara göre: RAG, Retrieval-Augmented Generation anlamına gelir. Önce ilgili bilgi dokümanlardan bulunur, sonra bu bilgi yapay zeka modeline bağlam olarak verilir.
+Soru embedding vektörüne çevriliyor...
+Embedding modeli yükleniyor...
+Embedding modeli kapatıldı.
 
-Kaynaklar:
+Chat modeli başlatılıyor: phi-4-mini
+Chat modeli yükleniyor...
+
+=== Cevap ===
+RAG, Retrieval-Augmented Generation anlamına gelir. Bu, önceden bulunmuş bilgileri bir yapay zeka modeline bağlam olarak kullanarak daha doğru yanıtlar üretmek için kullanılan bir yöntemdir.
+
+Chat modeli kapatıldı.
+
+=== Kaynaklar ===
 - Dosya: sample_doc.txt | Parça ID: 5 | Benzerlik: 0.852 | Final skor: 0.902
+- Dosya: sample_doc.txt | Parça ID: 4 | Benzerlik: 0.541 | Final skor: 0.591
 ```
 
 Başka bir örnek:
@@ -228,9 +289,9 @@ Başka bir örnek:
 Sorunuzu yazın: Foundry Local ne için kullanılacak?
 
 === Cevap ===
-Dokümanlara göre: Bu proje ileride Microsoft Foundry Local ile birleştirilerek yerel yapay zeka modeliyle cevap üretecektir.
+Foundry Local, yerel yapay zeka modeliyle cevap üretecek Local RAG AI Assistant projesinde kullanılacaktır.
 
-Kaynaklar:
+=== Kaynaklar ===
 - Dosya: project_faq.txt | Parça ID: 3 | Benzerlik: 0.815 | Final skor: 0.915
 ```
 
@@ -257,32 +318,79 @@ Foundry Local embedding tabanlı retrieval testini çalıştırmak için:
 python foundry_retrieval_test.py
 ```
 
+RAG + LLM cevap üretimi testini çalıştırmak için:
+
+```bash
+python foundry_rag_answer_test.py
+```
+
 ## Dosyaların Görevleri
 
-| Dosya                       | Görevi                                                                      |
-| --------------------------- | --------------------------------------------------------------------------- |
-| `main.py`                   | Basit eğitim sürümünü çalıştırır                                            |
-| `foundry_app.py`            | Foundry Local embedding tabanlı etkileşimli uygulamayı çalıştırır           |
-| `ingest.py`                 | Dokümanları okur ve parçalara böler                                         |
-| `database.py`               | Basit SQLite işlemlerini yapar                                              |
-| `rag.py`                    | Basit vektör benzerliği ile kaynak parça arar                               |
-| `embeddings.py`             | Eğitim amaçlı basit vektör oluşturma ve cosine similarity işlemlerini yapar |
-| `foundry_embeddings.py`     | Foundry Local embedding işlemleri için yardımcı sınıf içerir                |
-| `foundry_database.py`       | Foundry embeddinglerini SQLite’a kaydeder ve okur                           |
-| `foundry_ingest_test.py`    | Doküman embeddinglerini üretip SQLite’a kaydeder                            |
-| `foundry_retrieval_test.py` | SQLite’taki Foundry embeddingleriyle retrieval testi yapar                  |
-| `foundry_embedding_test.py` | Tek metin için Foundry embedding üretimini test eder                        |
-| `foundry_search_test.py`    | Foundry embedding ile doğrudan arama testi yapar                            |
-| `test_queries.py`           | Basit retrieval testlerini çalıştırır                                       |
-| `data/`                     | Sistemin cevap verirken kullanacağı dokümanları içerir                      |
-| `docs/`                     | Proje notlarını ve test sonuçlarını içerir                                  |
+| Dosya                        | Görevi                                                                      |
+| ---------------------------- | --------------------------------------------------------------------------- |
+| `main.py`                    | Basit eğitim sürümünü çalıştırır                                            |
+| `foundry_app.py`             | Final Foundry Local RAG + LLM uygulamasını çalıştırır                       |
+| `ingest.py`                  | Dokümanları okur ve parçalara böler                                         |
+| `database.py`                | Basit SQLite işlemlerini yapar                                              |
+| `rag.py`                     | Basit vektör benzerliği ile kaynak parça arar                               |
+| `embeddings.py`              | Eğitim amaçlı basit vektör oluşturma ve cosine similarity işlemlerini yapar |
+| `foundry_embeddings.py`      | Foundry Local embedding işlemleri için yardımcı sınıf içerir                |
+| `foundry_database.py`        | Foundry embeddinglerini SQLite’a kaydeder ve okur                           |
+| `foundry_ingest_test.py`     | Doküman embeddinglerini üretip SQLite’a kaydeder                            |
+| `foundry_retrieval_test.py`  | SQLite’taki Foundry embeddingleriyle retrieval testi yapar                  |
+| `foundry_embedding_test.py`  | Tek metin için Foundry embedding üretimini test eder                        |
+| `foundry_chat_test.py`       | Yerel chat modelinin cevap üretimini test eder                              |
+| `foundry_rag_answer_test.py` | Retrieval + LLM cevap üretimini test eder                                   |
+| `foundry_search_test.py`     | Foundry embedding ile doğrudan arama testi yapar                            |
+| `list_foundry_models.py`     | Foundry Local model kataloğundaki modelleri listeler                        |
+| `test_queries.py`            | Basit retrieval testlerini çalıştırır                                       |
+| `data/`                      | Sistemin cevap verirken kullanacağı dokümanları içerir                      |
+| `docs/`                      | Proje notlarını ve test sonuçlarını içerir                                  |
+
+## Tamamlanan Aşamalar
+
+- Python proje yapısı oluşturuldu
+- GitHub reposu oluşturuldu
+- Yerel doküman okuma eklendi
+- Doküman parçalama eklendi
+- SQLite veritabanı eklendi
+- Basit retrieval sistemi yazıldı
+- Query expansion eklendi
+- Basit test dosyası oluşturuldu
+- Microsoft Foundry Local SDK kuruldu
+- Foundry Local embedding modeli test edildi
+- Doküman embeddingleri SQLite’a kaydedildi
+- Stored embedding retrieval testi yapıldı
+- Yerel chat modeli test edildi
+- `phi-4-mini` modeli seçildi
+- RAG + LLM cevap üretimi test edildi
+- Final etkileşimli Foundry RAG uygulaması oluşturuldu
+- Kaynak gösterme özelliği eklendi
+- Dokümanda olmayan bilgi için uydurmama davranışı test edildi
+
+## Şu Anki Sınırlamalar
+
+- Yerel LLM bazen Türkçe cümlelerde küçük anlatım bozuklukları yapabilir.
+- Şu anda sadece `.txt` dosyaları destekleniyor.
+- Her soru için embedding ve chat modelleri yeniden yükleniyor; bu işlem yavaş olabilir.
+- Cevap kalitesi, bulunan kaynak parçaların kalitesine bağlıdır.
+- Henüz web arayüzü yoktur.
+- PDF ve DOCX desteği henüz eklenmemiştir.
 
 ## Sonraki Hedefler
 
-- Foundry Local ile yerel LLM bağlantısı kurmak
-- Bulunan kaynak parçaları yerel LLM modeline bağlam olarak vermek
-- Daha doğal cevap üretimi sağlamak
-- Kaynaklı cevap formatını geliştirmek
-- Embedding üretimini daha optimize hale getirmek
+- Modelleri her soruda yeniden yüklemek yerine açık tutarak hızlandırmak
+- Cevap formatını daha temiz hale getirmek
+- PDF dosyası desteği eklemek
+- DOCX dosyası desteği eklemek
+- Daha fazla test senaryosu eklemek
+- Daha iyi değerlendirme metrikleri oluşturmak
 - Basit bir web arayüzü eklemek
-- Daha fazla doküman türü desteklemek
+- README içine ekran görüntüsü veya demo çıktısı eklemek
+- Final proje raporu hazırlamak
+
+## Proje Özeti
+
+Local RAG AI Assistant, yerel dokümanlardan bilgi bulup bu bilgileri yerel yapay zeka modeliyle cevap haline getiren bir RAG uygulamasıdır.
+
+Proje eğitim amaçlı basit bir retrieval sistemiyle başlamış, daha sonra Microsoft Foundry Local ile embedding üretimi, SQLite tabanlı vektör saklama, kaynak bulma ve yerel LLM ile cevap üretme aşamalarına kadar geliştirilmiştir.
