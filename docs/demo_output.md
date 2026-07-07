@@ -1,20 +1,115 @@
-# Demo Output: Local RAG AI Assistant
+# Demo Çıktısı: Local RAG AI Assistant
 
-Bu dosya, Local RAG AI Assistant projesinin örnek çalışma çıktısını göstermektedir.
+Bu dosya, Local RAG AI Assistant projesinin final sürümünde alınan örnek terminal çıktılarını içerir.
 
-Demo, final Foundry tabanlı uygulama olan `foundry_app.py` üzerinden alınmıştır.
+Final sürümde sistem `.txt`, `.pdf` ve `.docx` dosyalarını okuyabilir, bu dokümanlardan embedding üretebilir, SQLite veritabanına kaydedebilir ve Foundry Local üzerinde çalışan yerel LLM ile kaynaklı cevap üretebilir.
 
-## Çalıştırma Komutu
+## 1. Örnek PDF ve DOCX Dosyalarının Oluşturulması
+
+PDF ve DOCX desteğini test etmek için örnek dosyalar oluşturulmuştur.
+
+Çalıştırılan komut:
+
+```bash
+python create_sample_documents.py
+```
+
+Örnek çıktı:
+
+```text
+DOCX dosyası oluşturuldu: data\docx_support_note.docx
+PDF dosyası oluşturuldu: data\pdf_support_note.pdf
+Örnek PDF ve DOCX dosyaları hazır.
+```
+
+Bu komut sonucunda `data/` klasörüne iki örnek dosya eklenmiştir:
+
+```text
+data/docx_support_note.docx
+data/pdf_support_note.pdf
+```
+
+## 2. Dokümanların Okunması ve Parçalara Ayrılması
+
+Desteklenen doküman türlerini okumak için `ingest.py` çalıştırılmıştır.
+
+Çalıştırılan komut:
+
+```bash
+python ingest.py
+```
+
+Örnek çıktı:
+
+```text
+=== Bilgi ===
+Desteklenen dosya türleri: .txt, .pdf, .docx
+Kaydedilen parça sayısı: 22
+```
+
+Bu çıktı, sistemin `.txt`, `.pdf` ve `.docx` dosyalarını okuyabildiğini ve toplam 22 doküman parçası oluşturduğunu göstermektedir.
+
+## 3. Foundry Embeddinglerinin SQLite’a Kaydedilmesi
+
+Doküman parçaları için Foundry Local embeddingleri üretilmiş ve SQLite veritabanına kaydedilmiştir.
+
+Çalıştırılan komut:
+
+```bash
+python foundry_ingest_test.py
+```
+
+Örnek çıktı:
+
+```text
+Toplam doküman parçası: 22
+Foundry SQLite tablosu oluşturuldu.
+Foundry Local başlatılıyor...
+Embedding modeli seçiliyor: qwen3-embedding-0.6b
+Model indiriliyor veya önbellekten hazırlanıyor...
+
+Model yükleniyor...
+Embedding client hazırlanıyor...
+
+Embedding üretiliyor: 1/22
+Kaynak: ai_notes.txt
+Kaydedildi. Vektör boyutu: 1024
+
+Embedding üretiliyor: 6/22
+Kaynak: docx_support_note.docx
+Kaydedildi. Vektör boyutu: 1024
+
+Embedding üretiliyor: 12/22
+Kaynak: pdf_support_note.pdf
+Kaydedildi. Vektör boyutu: 1024
+
+Embedding üretiliyor: 22/22
+Kaynak: troubleshooting_faq.txt
+Kaydedildi. Vektör boyutu: 1024
+
+Model kapatıldı.
+
+=== Kayıt Kontrolü ===
+SQLite'a kaydedilen parça sayısı: 22
+İlk kayıt kaynak dosyası: ai_notes.txt
+İlk kayıt vektör boyutu: 1024
+```
+
+Bu çıktı, tüm doküman parçalarının embedding vektörlerinin başarıyla oluşturulduğunu ve SQLite veritabanına kaydedildiğini göstermektedir.
+
+## 4. Final Foundry RAG Uygulamasının Başlatılması
+
+Final uygulama şu komutla çalıştırılmıştır:
 
 ```bash
 python foundry_app.py
 ```
 
-## Program Başlangıcı
+Başlangıç çıktısı:
 
 ```text
 Hızlandırılmış Foundry RAG Assistant başlatılıyor...
-Kayıtlı doküman parçası sayısı: 6
+Kayıtlı doküman parçası sayısı: 22
 Foundry Local başlatılıyor...
 Embedding modeli hazırlanıyor: qwen3-embedding-0.6b
 Chat modeli hazırlanıyor: phi-4-mini
@@ -24,185 +119,118 @@ Soru sormaya başlayabilirsiniz.
 Çıkmak için q yazabilirsiniz.
 ```
 
-Bu başlangıç çıktısı, sistemin iki modeli uygulama başında bir kez yüklediğini gösterir:
+Bu çıktı, embedding modelinin ve chat modelinin uygulama başlangıcında bir kez yüklendiğini göstermektedir.
+
+## 5. DOCX Desteği Demo Sorusu
+
+Sorulan soru:
 
 ```text
-qwen3-embedding-0.6b
-phi-4-mini
+DOCX desteği ne için eklendi?
 ```
 
-Embedding modeli kullanıcı sorusunu vektöre çevirmek için kullanılır.  
-Chat modeli ise bulunan kaynak parçalarına göre doğal cevap üretir.
+Alınan cevap:
 
----
+```text
+=== Cevap ===
+DOCX desteği, Local RAG AI Assistant projesinin Word belgelerini okuyabilmesi için eklendi.
 
-## Demo 1: RAG Sorusu
+=== Kaynaklar ===
+- Dosya: docx_support_note.docx | Parça ID: 6 | Benzerlik: 0.606 | Final skor: 0.606
+- Dosya: docx_support_note.docx | Parça ID: 5 | Benzerlik: 0.575 | Final skor: 0.575
+- Dosya: docx_support_note.docx | Parça ID: 7 | Benzerlik: 0.541 | Final skor: 0.541
+```
 
-### Kullanıcı Sorusu
+Bu örnek, sistemin DOCX dosyasını okuyabildiğini ve soruya doğru Word belgesini kaynak göstererek cevap verdiğini göstermektedir.
+
+## 6. PDF Desteği Demo Sorusu
+
+Sorulan soru:
+
+```text
+PDF desteği ne için eklendi?
+```
+
+Alınan cevap:
+
+```text
+=== Cevap ===
+PDF desteği, Local RAG AI Assistant projesinin PDF belgelerini okuyabilmesi için eklenmiştir.
+
+=== Kaynaklar ===
+- Dosya: pdf_support_note.pdf | Parça ID: 12 | Benzerlik: 0.636 | Final skor: 1.586
+- Dosya: docx_support_note.docx | Parça ID: 6 | Benzerlik: 0.505 | Final skor: 0.555
+- Dosya: docx_support_note.docx | Parça ID: 5 | Benzerlik: 0.535 | Final skor: 0.535
+```
+
+Bu örnek, sistemin PDF dosyasını okuyabildiğini ve doğru PDF dosyasını en alakalı kaynak olarak bulduğunu göstermektedir.
+
+## 7. RAG Sorusu Demo Çıktısı
+
+Sorulan soru:
 
 ```text
 RAG ne demek?
 ```
 
-### Sistem Cevabı
+Örnek cevap:
 
 ```text
 === Cevap ===
 RAG, Retrieval-Augmented Generation anlamına gelir. Önce ilgili bilgi dokümanlardan bulunur, sonra bu bilgi yapay zeka modeline bağlam olarak verilir.
-```
 
-### Kaynaklar
-
-```text
 === Kaynaklar ===
-- Dosya: sample_doc.txt | Parça ID: 5 | Benzerlik: 0.852 | Final skor: 0.902
-- Dosya: sample_doc.txt | Parça ID: 4 | Benzerlik: 0.541 | Final skor: 0.591
+- Dosya: sample_doc.txt | Parça ID: 17 | Benzerlik: 0.852 | Final skor: 0.902
 ```
 
-### Yorum
+Bu örnek, sistemin RAG ile ilgili bilgiyi yerel dokümanlardan bulup kaynaklı cevap üretebildiğini göstermektedir.
 
-Bu örnekte sistem, RAG ile ilgili bilgiyi `sample_doc.txt` dosyasındaki ilgili parçalardan bulmuştur.
+## 8. Dokümanda Olmayan Bilgi Demo Çıktısı
 
-Cevap, doğrudan dokümanda bulunan bilgiye dayanmaktadır.
-
----
-
-## Demo 2: SQLite Sorusu
-
-### Kullanıcı Sorusu
-
-```text
-SQLite ne işe yarar?
-```
-
-### Sistem Cevabı
-
-```text
-=== Cevap ===
-SQLite, soruların cevaplandığı yerel dokümanlardan yapılan soru-cevap sistemlerinde saklanması için kullanılan hafif bir yerel veritabanıdır.
-```
-
-### Kaynaklar
-
-```text
-=== Kaynaklar ===
-- Dosya: project_faq.txt | Parça ID: 2 | Benzerlik: 0.772 | Final skor: 0.822
-- Dosya: sample_doc.txt | Parça ID: 4 | Benzerlik: 0.457 | Final skor: 0.457
-- Dosya: sample_doc.txt | Parça ID: 6 | Benzerlik: 0.395 | Final skor: 0.395
-```
-
-### Yorum
-
-Bu örnekte sistem, SQLite ile ilgili en alakalı bilgiyi `project_faq.txt` dosyasından bulmuştur.
-
-Kaynaklar kısmında en yüksek final skora sahip parçanın en alakalı kaynak olduğu görülmektedir.
-
----
-
-## Demo 3: Foundry Local Sorusu
-
-### Kullanıcı Sorusu
-
-```text
-Foundry Local ne için kullanılacak?
-```
-
-### Sistem Cevabı
-
-```text
-=== Cevap ===
-Foundry Local, yerel yapay zeka modeliyle cevap üretmek için Microsoft Foundry ile birleştirilecek.
-```
-
-### Kaynaklar
-
-```text
-=== Kaynaklar ===
-- Dosya: project_faq.txt | Parça ID: 3 | Benzerlik: 0.815 | Final skor: 0.915
-- Dosya: sample_doc.txt | Parça ID: 4 | Benzerlik: 0.495 | Final skor: 0.545
-- Dosya: project_faq.txt | Parça ID: 2 | Benzerlik: 0.438 | Final skor: 0.438
-```
-
-### Yorum
-
-Bu örnekte sistem, Foundry Local ile ilgili bilgiyi `project_faq.txt` dosyasındaki üçüncü parçadan bulmuştur.
-
-Final skorun yüksek olması, bu parçanın soruyla güçlü şekilde ilişkili olduğunu göstermektedir.
-
----
-
-## Demo 4: Dokümanda Olmayan Bilgi
-
-### Kullanıcı Sorusu
+Sorulan soru:
 
 ```text
 Türkiye'nin başkenti neresi?
 ```
 
-### Sistem Cevabı
+Alınan cevap:
 
 ```text
 === Cevap ===
 Bu bilgi mevcut dokümanlarda bulunamadı.
 ```
 
-### Yorum
+Bu çıktı, sistemin dokümanlarda bulunmayan bilgi için cevap uydurmadığını göstermektedir.
 
-Bu örnek, projenin en önemli davranışlarından birini göstermektedir.
+## 9. Programdan Çıkış
 
-Sistemin yerel dokümanlarında Türkiye'nin başkenti ile ilgili bilgi yoktur. Bu yüzden sistem cevap uydurmamış ve bilginin mevcut dokümanlarda bulunmadığını söylemiştir.
+Çıkmak için kullanıcı `q` yazmıştır.
 
-Bu davranış, RAG sistemlerinde güvenilirlik açısından önemlidir.
-
----
-
-## Programdan Çıkış
-
-### Kullanıcı Girişi
+Örnek çıktı:
 
 ```text
-q
-```
-
-### Program Çıkışı
-
-```text
+Sorunuzu yazın: q
 Program kapatıldı.
 Chat modeli kapatıldı.
 Embedding modeli kapatıldı.
 ```
 
-### Yorum
+Bu çıktı, program kapanırken chat modelinin ve embedding modelinin güvenli şekilde kapatıldığını göstermektedir.
 
-Bu çıktı, uygulamanın çıkış sırasında modelleri güvenli şekilde kapattığını gösterir.
+## 10. Demo Sonucu
 
-Final sürümde modeller her soru için tekrar yüklenmez. Bunun yerine uygulama başında bir kez yüklenir ve program kapanırken kapatılır.
+Demo sonucunda sistemin şu özellikleri başarıyla gösterilmiştir:
 
----
+- `.txt` dosyalarını okuma
+- `.pdf` dosyalarını okuma
+- `.docx` dosyalarını okuma
+- Dokümanları parçalara ayırma
+- Foundry Local ile embedding üretme
+- Embeddingleri SQLite veritabanına kaydetme
+- Kullanıcı sorusuna göre kaynak bulma
+- Yerel LLM ile cevap üretme
+- Cevapla birlikte kaynak gösterme
+- Dokümanda olmayan bilgi için cevap uydurmama
+- Modelleri başlangıçta bir kez yükleyip program kapanırken güvenli şekilde kapatma
 
-## Demo Özeti
-
-Bu demo çıktısı, final uygulamanın şu özellikleri başarıyla yaptığını göstermektedir:
-
-- Kullanıcıdan soru alır
-- Soruyu embedding vektörüne çevirir
-- SQLite içindeki kayıtlı embeddinglerle karşılaştırır
-- En alakalı kaynak parçaları bulur
-- Bulunan kaynakları `phi-4-mini` modeline bağlam olarak verir
-- Kısa ve anlaşılır cevap üretir
-- Cevapla birlikte kaynak dosya, parça ID, benzerlik ve final skor gösterir
-- Dokümanda olmayan bilgi için cevap uydurmaz
-- Program kapanırken modelleri güvenli şekilde kapatır
-
-## Kullanılan Modeller
-
-| Model                  | Görev                                 |
-| ---------------------- | ------------------------------------- |
-| `qwen3-embedding-0.6b` | Soru ve doküman embeddingleri üretmek |
-| `phi-4-mini`           | Bulunan kaynaklara göre cevap üretmek |
-
-## Sonuç
-
-Demo sonucunda Local RAG AI Assistant uygulamasının temel RAG akışını başarıyla gerçekleştirdiği görülmüştür.
-
-Sistem, yerel dokümanlardan bilgi bulmuş, bulunan kaynaklara göre cevap üretmiş ve dokümanda olmayan bilgi için cevap uydurmamıştır.
+Bu demo, Local RAG AI Assistant projesinin final sürümünün çalışır durumda olduğunu göstermektedir.
