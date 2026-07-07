@@ -1,5 +1,11 @@
+from foundry_local_sdk import Configuration, FoundryLocalManager
+
 from foundry_database import get_all_chunks
-from foundry_embeddings import FoundryEmbedder, cosine_similarity
+from foundry_embeddings import cosine_similarity
+
+
+EMBEDDING_MODEL_NAME = "qwen3-embedding-0.6b"
+CHAT_MODEL_NAME = "phi-4-mini"
 
 
 def expand_query(query):
@@ -47,14 +53,42 @@ def keyword_bonus(question, content):
     return bonus
 
 
-def find_top_chunks(question, embedder, top_k=3, min_final_score=0.35):
+def create_question_embedding(question):
+    print("\nSoru embedding vektörüne çevriliyor...")
+
+    manager = FoundryLocalManager.instance
+    model = manager.catalog.get_model(EMBEDDING_MODEL_NAME)
+
+    model.download(
+        lambda progress: print(
+            f"\rEmbedding modeli hazırlanıyor: {progress:.2f}%",
+            end="",
+            flush=True,
+        )
+    )
+
+    print("\nEmbedding modeli yükleniyor...")
+    model.load()
+
+    try:
+        client = model.get_embedding_client()
+        expanded_question = expand_query(question)
+        response = client.generate_embedding(expanded_question)
+        embedding = response.data[0].embedding
+        return embedding
+
+    finally:
+        model.unload()
+        print("Embedding modeli kapatıldı.")
+
+
+def find_top_chunks(question, top_k=3, min_final_score=0.35):
     chunks = get_all_chunks()
 
     if not chunks:
         return []
 
-    expanded_question = expand_query(question)
-    question_embedding = embedder.embed_text(expanded_question)
+    question_embedding = create_question_embedding(question)
 
     results = []
 
@@ -72,7 +106,7 @@ def find_top_chunks(question, embedder, top_k=3, min_final_score=0.35):
                 "source": chunk["source"],
                 "content": chunk["content"],
                 "similarity": similarity,
-                "final_score": final_score
+                "final_score": final_score,
             })
 
     results.sort(key=lambda item: item["final_score"], reverse=True)
@@ -80,18 +114,87 @@ def find_top_chunks(question, embedder, top_k=3, min_final_score=0.35):
     return results[:top_k]
 
 
-def print_answer(results):
-    if not results:
+def build_context(results):
+    context_parts = []
+
+    for result in results:
+        context_parts.append(
+            f"[Kaynak: {result['source']} | Parça ID: {result['id']}]\n"
+            f"{result['content']}"
+        )
+
+    return "\n\n".join(context_parts)
+
+
+def generate_answer_with_chat_model(question, context):
+    print("\nChat modeli başlatılıyor:", CHAT_MODEL_NAME)
+
+    manager = FoundryLocalManager.instance
+    model = manager.catalog.get_model(CHAT_MODEL_NAME)
+
+    model.download(
+        lambda progress: print(
+            f"\rChat modeli hazırlanıyor: {progress:.2f}%",
+            end="",
+            flush=True,
+        )
+    )
+
+    print("\nChat modeli yükleniyor...")
+    model.load()
+
+    try:
+        client = model.get_chat_client()
+
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "Sen Türkçe cevap veren yardımcı bir yapay zeka asistanısın. "
+                    "Sadece verilen bağlamı kullanarak cevap ver. "
+                    "Bağlam dışı bilgi ekleme. "
+                    "Bağlamda bilgi yoksa 'Bu bilgi mevcut dokümanlarda bulunamadı.' de. "
+                    "Cevabın kısa, açık ve en fazla 2 cümle olsun."
+                ),
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"Bağlam:\n{context}\n\n"
+                    f"Soru: {question}\n\n"
+                    "Cevap:"
+                ),
+            },
+        ]
+
         print("\n=== Cevap ===")
-        print("Bu bilgi mevcut dokümanlarda bulunamadı.")
-        return
 
-    best_result = results[0]
+        output_piece_count = 0
+        max_output_pieces = 120
 
-    print("\n=== Cevap ===")
-    print("Dokümanlara göre:", best_result["content"])
+        for chunk in client.complete_streaming_chat(messages):
+            if output_piece_count >= max_output_pieces:
+                print("\n\nCevap çok uzadığı için burada durduruldu.")
+                break
 
-    print("\nKaynaklar:")
+            if not chunk.choices:
+                continue
+
+            content = chunk.choices[0].delta.content
+
+            if content:
+                print(content, end="", flush=True)
+                output_piece_count += 1
+
+        print()
+
+    finally:
+        model.unload()
+        print("\nChat modeli kapatıldı.")
+
+
+def print_sources(results):
+    print("\n=== Kaynaklar ===")
 
     for result in results:
         print(
@@ -103,6 +206,8 @@ def print_answer(results):
 
 
 def main():
+    print("Foundry tabanlı Local RAG Assistant başlatılıyor...")
+
     chunks = get_all_chunks()
 
     if not chunks:
@@ -111,33 +216,36 @@ def main():
         print("python foundry_ingest_test.py")
         return
 
-    print("Foundry tabanlı Local RAG Assistant başlatılıyor...")
     print("Kayıtlı doküman parçası sayısı:", len(chunks))
 
-    embedder = FoundryEmbedder()
+    config = Configuration(app_name="local_rag_ai_assistant")
+    FoundryLocalManager.initialize(config)
 
-    try:
-        embedder.start()
+    print("\nSoru sormaya başlayabilirsiniz.")
+    print("Çıkmak için q yazabilirsiniz.")
 
-        print("\nSoru sormaya başlayabilirsiniz.")
-        print("Çıkmak için q yazabilirsiniz.")
+    while True:
+        question = input("\nSorunuzu yazın: ")
 
-        while True:
-            question = input("\nSorunuzu yazın: ")
+        if question.lower().strip() in ["q", "quit", "exit", "çıkış"]:
+            print("Program kapatıldı.")
+            break
 
-            if question.lower().strip() in ["q", "quit", "exit", "çıkış"]:
-                print("Program kapatıldı.")
-                break
+        if not question.strip():
+            print("Lütfen boş olmayan bir soru yazın.")
+            continue
 
-            if not question.strip():
-                print("Lütfen boş olmayan bir soru yazın.")
-                continue
+        results = find_top_chunks(question)
 
-            results = find_top_chunks(question, embedder)
-            print_answer(results)
+        if not results:
+            print("\n=== Cevap ===")
+            print("Bu bilgi mevcut dokümanlarda bulunamadı.")
+            continue
 
-    finally:
-        embedder.stop()
+        context = build_context(results)
+
+        generate_answer_with_chat_model(question, context)
+        print_sources(results)
 
 
 if __name__ == "__main__":
