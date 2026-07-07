@@ -4,6 +4,8 @@ Bu proje, yerel dokümanlardan bilgi bulabilen ve bu bilgileri yerel bir yapay z
 
 Proje önce eğitim amaçlı basit vektör benzerliği ile başlamış, daha sonra Microsoft Foundry Local kullanılarak gerçek embedding tabanlı yerel retrieval sistemine ve yerel LLM destekli cevap üretimine dönüştürülmüştür.
 
+Final durumda sistem `.txt`, `.pdf` ve `.docx` dosyalarını okuyabilir, bu dosyalardan embedding üretebilir, SQLite veritabanında saklayabilir ve kullanıcının sorularına yerel LLM ile kaynaklı cevap üretebilir.
+
 ## Projenin Amacı
 
 Bu projenin amacı, kullanıcının sorduğu soruya göre yerel dokümanlar içinden en alakalı bilgi parçalarını bulmak ve bu parçaları kullanarak kısa, kaynaklı ve anlaşılır cevaplar üretmektir.
@@ -13,7 +15,8 @@ Sistem internet bağlantısına ihtiyaç duymadan yerel dokümanlardan bilgi ara
 ## Şu Anki Özellikler
 
 - Python proje yapısı oluşturuldu
-- `data` klasöründeki birden fazla `.txt` dosyası okunabiliyor
+- `data` klasöründeki birden fazla doküman okunabiliyor
+- `.txt`, `.pdf` ve `.docx` dosyaları destekleniyor
 - Dokümanlar paragraflara ayrılıyor
 - Parçalar SQLite veritabanına kaydediliyor
 - Eğitim amaçlı basit vektör benzerliği ile arama yapılabiliyor
@@ -31,6 +34,7 @@ Sistem internet bağlantısına ihtiyaç duymadan yerel dokümanlardan bilgi ara
 - Embedding ve chat modelleri uygulama başında bir kez yükleniyor
 - Program kapatılırken modeller güvenli şekilde kapatılıyor
 - Etkileşimli Foundry tabanlı uygulama `python foundry_app.py` komutu ile çalışıyor
+- PDF ve DOCX desteği gerçek dosyalarla test edildi
 - Final proje raporu hazırlandı
 - Demo çıktı dokümantasyonu hazırlandı
 
@@ -39,8 +43,13 @@ Sistem internet bağlantısına ihtiyaç duymadan yerel dokümanlardan bilgi ara
 ```text
 local-rag-ai-assistant/
 ├── data/
+│   ├── ai_notes.txt
+│   ├── docx_support_note.docx
+│   ├── foundry_manual.txt
+│   ├── pdf_support_note.pdf
+│   ├── project_faq.txt
 │   ├── sample_doc.txt
-│   └── project_faq.txt
+│   └── troubleshooting_faq.txt
 ├── docs/
 │   ├── project_notes.md
 │   ├── test_results.md
@@ -48,6 +57,7 @@ local-rag-ai-assistant/
 │   ├── foundry_test_results.md
 │   ├── final_report.md
 │   └── demo_output.md
+├── create_sample_documents.py
 ├── database.py
 ├── embeddings.py
 ├── foundry_app.py
@@ -81,6 +91,8 @@ local-rag-ai-assistant/
 - Cosine similarity
 - Query expansion
 - Retrieval-Augmented Generation
+- pypdf
+- python-docx
 - GitHub
 
 ## Kurulum
@@ -91,11 +103,33 @@ Gerekli paketleri kurmak için:
 pip install -r requirements.txt
 ```
 
+`requirements.txt` içinde kullanılan temel paketler:
+
+```text
+numpy
+foundry-local-sdk-winml
+openai
+pypdf
+python-docx
+```
+
 Windows için Foundry Local SDK paketi:
 
 ```text
 foundry-local-sdk-winml
 ```
+
+## Desteklenen Dosya Türleri
+
+Sistem şu dosya türlerini okuyabilir:
+
+```text
+.txt
+.pdf
+.docx
+```
+
+`ingest.py` dosyası `data/` klasöründeki desteklenen dosyaları okur, içerikleri parçalara ayırır ve veritabanına kaydeder.
 
 ## Basit Sürümü Çalıştırma
 
@@ -130,6 +164,38 @@ python foundry_chat_test.py
 
 Bu testte en iyi sonucu `phi-4-mini` modeli vermiştir.
 
+## Örnek PDF ve DOCX Dosyaları Oluşturma
+
+PDF ve DOCX desteğini test etmek için örnek dosyalar oluşturulabilir:
+
+```bash
+python create_sample_documents.py
+```
+
+Bu komut `data/` klasörüne şu dosyaları ekler:
+
+```text
+data/docx_support_note.docx
+data/pdf_support_note.pdf
+```
+
+Bu dosyalar sistemin Word ve PDF belgelerini okuyabildiğini test etmek için kullanılır.
+
+## Dokümanları Okuma ve Parçalama
+
+Desteklenen dokümanları okuyup SQLite’a kaydetmek için:
+
+```bash
+python ingest.py
+```
+
+Beklenen çıktı örneği:
+
+```text
+Desteklenen dosya türleri: .txt, .pdf, .docx
+Kaydedilen parça sayısı: 22
+```
+
 ## Foundry Embeddingleri SQLite’a Kaydetme
 
 Doküman parçalarını Foundry Local embedding modelinden geçirip SQLite’a kaydetmek için:
@@ -148,6 +214,14 @@ Dokümanları parçalara böler
 Her parça için Foundry Local embedding üretir
 ↓
 Embeddingleri SQLite veritabanına kaydeder
+```
+
+Örnek başarılı çıktı:
+
+```text
+Toplam doküman parçası: 22
+SQLite'a kaydedilen parça sayısı: 22
+İlk kayıt vektör boyutu: 1024
 ```
 
 ## Foundry Retrieval Testi
@@ -196,6 +270,11 @@ Program açıldıktan sonra soru sorabilirsiniz.
 RAG ne demek?
 SQLite ne işe yarar?
 Foundry Local ne için kullanılacak?
+Yapay zeka nedir?
+RAG halüsinasyonu nasıl azaltır?
+Foundry veritabanında kayıtlı parça yoksa ne yapmalıyım?
+DOCX desteği ne için eklendi?
+PDF desteği ne için eklendi?
 Türkiye'nin başkenti neresi?
 ```
 
@@ -287,11 +366,17 @@ Yerel LLM, cevap üretimini internet üzerinden değil, bilgisayarda çalışan 
 
 Bu projede cevap üretimi için `phi-4-mini` modeli kullanılmıştır.
 
+### PDF ve DOCX Okuma
+
+PDF dosyalarını okumak için `pypdf`, DOCX dosyalarını okumak için `python-docx` kullanılmıştır.
+
+Bu sayede sistem yalnızca düz metin dosyalarıyla değil, Word ve PDF belgeleriyle de çalışabilir.
+
 ## Örnek Çıktı
 
 ```text
 Hızlandırılmış Foundry RAG Assistant başlatılıyor...
-Kayıtlı doküman parçası sayısı: 6
+Kayıtlı doküman parçası sayısı: 22
 Foundry Local başlatılıyor...
 Embedding modeli hazırlanıyor: qwen3-embedding-0.6b
 Chat modeli hazırlanıyor: phi-4-mini
@@ -299,30 +384,47 @@ Modeller hazır.
 
 Soru sormaya başlayabilirsiniz.
 Çıkmak için q yazabilirsiniz.
+```
 
+### RAG Sorusu
+
+```text
 Sorunuzu yazın: RAG ne demek?
 
 === Cevap ===
 RAG, Retrieval-Augmented Generation anlamına gelir. Önce ilgili bilgi dokümanlardan bulunur, sonra bu bilgi yapay zeka modeline bağlam olarak verilir.
 
 === Kaynaklar ===
-- Dosya: sample_doc.txt | Parça ID: 5 | Benzerlik: 0.852 | Final skor: 0.902
-- Dosya: sample_doc.txt | Parça ID: 4 | Benzerlik: 0.541 | Final skor: 0.591
+- Dosya: sample_doc.txt | Parça ID: 17 | Benzerlik: 0.852 | Final skor: 0.902
 ```
 
-Başka bir örnek:
+### DOCX Sorusu
 
 ```text
-Sorunuzu yazın: Foundry Local ne için kullanılacak?
+Sorunuzu yazın: DOCX desteği ne için eklendi?
 
 === Cevap ===
-Foundry Local, yerel yapay zeka modeliyle cevap üretmek için Microsoft Foundry ile birleştirilecek.
+DOCX desteği, Local RAG AI Assistant projesinin Word belgelerini okuyabilmesi için eklendi.
 
 === Kaynaklar ===
-- Dosya: project_faq.txt | Parça ID: 3 | Benzerlik: 0.815 | Final skor: 0.915
+- Dosya: docx_support_note.docx | Parça ID: 6 | Benzerlik: 0.606 | Final skor: 0.606
+- Dosya: docx_support_note.docx | Parça ID: 5 | Benzerlik: 0.575 | Final skor: 0.575
+- Dosya: docx_support_note.docx | Parça ID: 7 | Benzerlik: 0.541 | Final skor: 0.541
 ```
 
-Bilgi dokümanlarda yoksa:
+### PDF Sorusu
+
+```text
+Sorunuzu yazın: PDF desteği ne için eklendi?
+
+=== Cevap ===
+PDF desteği, Local RAG AI Assistant projesinin PDF belgelerini okuyabilmesi için eklenmiştir.
+
+=== Kaynaklar ===
+- Dosya: pdf_support_note.pdf | Parça ID: 12 | Benzerlik: 0.636 | Final skor: 1.586
+```
+
+### Dokümanda Olmayan Bilgi
 
 ```text
 Sorunuzu yazın: Türkiye'nin başkenti neresi?
@@ -331,7 +433,7 @@ Sorunuzu yazın: Türkiye'nin başkenti neresi?
 Bu bilgi mevcut dokümanlarda bulunamadı.
 ```
 
-Program kapatılırken:
+### Programdan Çıkış
 
 ```text
 Sorunuzu yazın: q
@@ -360,6 +462,12 @@ RAG + LLM cevap üretimi testini çalıştırmak için:
 python foundry_rag_answer_test.py
 ```
 
+PDF ve DOCX örnek dosyalarını oluşturmak için:
+
+```bash
+python create_sample_documents.py
+```
+
 Final uygulamayı çalıştırmak için:
 
 ```bash
@@ -379,27 +487,40 @@ python foundry_app.py
 
 ## Dosyaların Görevleri
 
-| Dosya                        | Görevi                                                                      |
-| ---------------------------- | --------------------------------------------------------------------------- |
-| `main.py`                    | Basit eğitim sürümünü çalıştırır                                            |
-| `foundry_app.py`             | Final Foundry Local RAG + LLM uygulamasını çalıştırır                       |
-| `foundry_app_fast_test.py`   | Modelleri başta bir kez yükleyen hızlandırılmış test sürümüdür              |
-| `ingest.py`                  | Dokümanları okur ve parçalara böler                                         |
-| `database.py`                | Basit SQLite işlemlerini yapar                                              |
-| `rag.py`                     | Basit vektör benzerliği ile kaynak parça arar                               |
-| `embeddings.py`              | Eğitim amaçlı basit vektör oluşturma ve cosine similarity işlemlerini yapar |
-| `foundry_embeddings.py`      | Foundry Local embedding işlemleri için yardımcı sınıf içerir                |
-| `foundry_database.py`        | Foundry embeddinglerini SQLite’a kaydeder ve okur                           |
-| `foundry_ingest_test.py`     | Doküman embeddinglerini üretip SQLite’a kaydeder                            |
-| `foundry_retrieval_test.py`  | SQLite’taki Foundry embeddingleriyle retrieval testi yapar                  |
-| `foundry_embedding_test.py`  | Tek metin için Foundry embedding üretimini test eder                        |
-| `foundry_chat_test.py`       | Yerel chat modelinin cevap üretimini test eder                              |
-| `foundry_rag_answer_test.py` | Retrieval + LLM cevap üretimini test eder                                   |
-| `foundry_search_test.py`     | Foundry embedding ile doğrudan arama testi yapar                            |
-| `list_foundry_models.py`     | Foundry Local model kataloğundaki modelleri listeler                        |
-| `test_queries.py`            | Basit retrieval testlerini çalıştırır                                       |
-| `data/`                      | Sistemin cevap verirken kullanacağı dokümanları içerir                      |
-| `docs/`                      | Proje notlarını, test sonuçlarını, final raporu ve demo çıktısını içerir    |
+| Dosya                        | Görevi                                                                             |
+| ---------------------------- | ---------------------------------------------------------------------------------- |
+| `main.py`                    | Basit eğitim sürümünü çalıştırır                                                   |
+| `foundry_app.py`             | Final Foundry Local RAG + LLM uygulamasını çalıştırır                              |
+| `foundry_app_fast_test.py`   | Modelleri başta bir kez yükleyen hızlandırılmış test sürümüdür                     |
+| `create_sample_documents.py` | Örnek PDF ve DOCX test dosyaları oluşturur                                         |
+| `ingest.py`                  | `.txt`, `.pdf` ve `.docx` dosyalarını okur ve parçalara böler                      |
+| `database.py`                | Basit SQLite işlemlerini yapar                                                     |
+| `rag.py`                     | Basit vektör benzerliği ile kaynak parça arar                                      |
+| `embeddings.py`              | Eğitim amaçlı basit vektör oluşturma ve cosine similarity işlemlerini yapar        |
+| `foundry_embeddings.py`      | Foundry Local embedding işlemleri için yardımcı sınıf içerir                       |
+| `foundry_database.py`        | Foundry embeddinglerini SQLite’a kaydeder ve okur                                  |
+| `foundry_ingest_test.py`     | Doküman embeddinglerini üretip SQLite’a kaydeder                                   |
+| `foundry_retrieval_test.py`  | SQLite’taki Foundry embeddingleriyle retrieval testi yapar                         |
+| `foundry_embedding_test.py`  | Tek metin için Foundry embedding üretimini test eder                               |
+| `foundry_chat_test.py`       | Yerel chat modelinin cevap üretimini test eder                                     |
+| `foundry_rag_answer_test.py` | Retrieval + LLM cevap üretimini test eder                                          |
+| `foundry_search_test.py`     | Foundry embedding ile doğrudan arama testi yapar                                   |
+| `list_foundry_models.py`     | Foundry Local model kataloğundaki modelleri listeler                               |
+| `test_queries.py`            | Basit retrieval testlerini çalıştırır                                              |
+| `data/`                      | Sistemin cevap verirken kullanacağı `.txt`, `.pdf` ve `.docx` dokümanlarını içerir |
+| `docs/`                      | Proje notlarını, test sonuçlarını, final raporu ve demo çıktısını içerir           |
+
+## Veri Dosyaları
+
+| Dosya                          | Açıklama                                          |
+| ------------------------------ | ------------------------------------------------- |
+| `data/sample_doc.txt`          | RAG ve proje amacıyla ilgili temel açıklamalar    |
+| `data/project_faq.txt`         | Proje hakkında kısa SSS içeriği                   |
+| `data/ai_notes.txt`            | Yapay zeka ve RAG hakkında ek notlar              |
+| `data/foundry_manual.txt`      | Foundry Local kullanımıyla ilgili açıklamalar     |
+| `data/troubleshooting_faq.txt` | Hata durumları ve çözüm önerileri                 |
+| `data/docx_support_note.docx`  | DOCX desteğini test etmek için örnek Word belgesi |
+| `data/pdf_support_note.pdf`    | PDF desteğini test etmek için örnek PDF belgesi   |
 
 ## Tamamlanan Aşamalar
 
@@ -424,23 +545,26 @@ python foundry_app.py
 - Foundry app hızlandırıldı
 - Modellerin her soruda yeniden yüklenmesi yerine başlangıçta bir kez yüklenmesi sağlandı
 - Program kapanırken modellerin güvenli şekilde kapatılması sağlandı
+- Doküman koleksiyonu genişletildi
+- PDF dosyası okuma desteği eklendi
+- DOCX dosyası okuma desteği eklendi
+- PDF ve DOCX dosyaları gerçek örneklerle test edildi
 - Final proje raporu hazırlandı
 - Demo çıktı dokümantasyonu hazırlandı
 
 ## Şu Anki Sınırlamalar
 
 - Yerel LLM bazen Türkçe cümlelerde küçük anlatım bozuklukları yapabilir.
-- Şu anda sadece `.txt` dosyaları destekleniyor.
 - İlk açılışta modellerin yüklenmesi biraz zaman alabilir.
 - Cevap kalitesi, bulunan kaynak parçaların kalitesine bağlıdır.
+- PDF desteği metin içeren PDF dosyaları için uygundur; taranmış görsel PDF dosyaları için OCR desteği yoktur.
 - Henüz web arayüzü yoktur.
-- PDF ve DOCX desteği henüz eklenmemiştir.
+- Daha kapsamlı test senaryoları eklenebilir.
 
 ## Sonraki Hedefler
 
 - Cevap formatını daha temiz hale getirmek
-- PDF dosyası desteği eklemek
-- DOCX dosyası desteği eklemek
+- Taranmış PDF dosyaları için OCR desteği eklemek
 - Daha fazla test senaryosu eklemek
 - Daha iyi değerlendirme metrikleri oluşturmak
 - Basit bir web arayüzü eklemek
@@ -451,6 +575,6 @@ python foundry_app.py
 
 Local RAG AI Assistant, yerel dokümanlardan bilgi bulup bu bilgileri yerel yapay zeka modeliyle cevap haline getiren bir RAG uygulamasıdır.
 
-Proje eğitim amaçlı basit bir retrieval sistemiyle başlamış, daha sonra Microsoft Foundry Local ile embedding üretimi, SQLite tabanlı vektör saklama, kaynak bulma, yerel LLM ile cevap üretme ve hızlandırılmış model yükleme aşamalarına kadar geliştirilmiştir.
+Proje eğitim amaçlı basit bir retrieval sistemiyle başlamış, daha sonra Microsoft Foundry Local ile embedding üretimi, SQLite tabanlı vektör saklama, kaynak bulma, yerel LLM ile cevap üretme, hızlandırılmış model yükleme ve PDF/DOCX doküman desteği aşamalarına kadar geliştirilmiştir.
 
-Final durumda proje; çalışan uygulama, güncel README, final rapor ve demo çıktısı dokümantasyonu ile sunuma hazır hale gelmiştir.
+Final durumda proje; çalışan uygulama, genişletilmiş doküman desteği, güncel README, final rapor ve demo çıktısı dokümantasyonu ile sunuma hazır hale gelmiştir.
