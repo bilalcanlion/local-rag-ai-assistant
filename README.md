@@ -28,6 +28,8 @@ Sistem internet bağlantısına ihtiyaç duymadan yerel dokümanlardan bilgi ara
 - `phi-4-mini` modeli ile doğal cevap üretimi yapılıyor
 - Cevapta kaynak dosya adı, parça ID, benzerlik ve final skor gösteriliyor
 - Bilgi dokümanlarda yoksa sistem cevap uydurmuyor
+- Embedding ve chat modelleri uygulama başında bir kez yükleniyor
+- Program kapatılırken modeller güvenli şekilde kapatılıyor
 - Etkileşimli Foundry tabanlı uygulama `python foundry_app.py` komutu ile çalışıyor
 
 ## Proje Yapısı
@@ -45,6 +47,7 @@ local-rag-ai-assistant/
 ├── database.py
 ├── embeddings.py
 ├── foundry_app.py
+├── foundry_app_fast_test.py
 ├── foundry_chat_test.py
 ├── foundry_database.py
 ├── foundry_embedding_test.py
@@ -162,6 +165,16 @@ python foundry_rag_answer_test.py
 
 Bu test, final uygulamaya geçmeden önce kaynak bulma ve LLM cevap üretme adımının birlikte çalıştığını doğrulamak için kullanılmıştır.
 
+## Hızlandırılmış Uygulama Testi
+
+Modellerin her soru için yeniden yüklenmesini engelleyen hızlandırılmış sürüm test edilmiştir:
+
+```bash
+python foundry_app_fast_test.py
+```
+
+Bu test başarılı olduktan sonra aynı mantık ana uygulama dosyası olan `foundry_app.py` içine taşınmıştır.
+
 ## Final Foundry Tabanlı Etkileşimli Uygulama
 
 Asıl Foundry tabanlı uygulamayı çalıştırmak için:
@@ -192,11 +205,17 @@ yazabilirsiniz.
 ## Final Uygulamanın Çalışma Mantığı
 
 ```text
-Kullanıcıdan soru al
+Uygulama başlatılır
 ↓
-Soruyu query expansion ile güçlendir
+Embedding modeli yüklenir
 ↓
-Soruyu Foundry Local embedding modeline gönder
+Chat modeli yüklenir
+↓
+Kullanıcıdan soru alınır
+↓
+Soru query expansion ile güçlendirilir
+↓
+Soru Foundry Local embedding modeline gönderilir
 ↓
 Soru embedding vektörüne çevrilir
 ↓
@@ -213,6 +232,8 @@ Bağlam phi-4-mini yerel chat modeline verilir
 LLM kısa bir cevap üretir
 ↓
 Kaynak dosya, parça ID, benzerlik ve final skor gösterilir
+↓
+Programdan çıkılırken modeller kapatılır
 ```
 
 ## Kullanılan Temel Kavramlar
@@ -264,19 +285,20 @@ Bu projede cevap üretimi için `phi-4-mini` modeli kullanılmıştır.
 ## Örnek Çıktı
 
 ```text
+Hızlandırılmış Foundry RAG Assistant başlatılıyor...
+Kayıtlı doküman parçası sayısı: 6
+Foundry Local başlatılıyor...
+Embedding modeli hazırlanıyor: qwen3-embedding-0.6b
+Chat modeli hazırlanıyor: phi-4-mini
+Modeller hazır.
+
+Soru sormaya başlayabilirsiniz.
+Çıkmak için q yazabilirsiniz.
+
 Sorunuzu yazın: RAG ne demek?
 
-Soru embedding vektörüne çevriliyor...
-Embedding modeli yükleniyor...
-Embedding modeli kapatıldı.
-
-Chat modeli başlatılıyor: phi-4-mini
-Chat modeli yükleniyor...
-
 === Cevap ===
-RAG, Retrieval-Augmented Generation anlamına gelir. Bu, önceden bulunmuş bilgileri bir yapay zeka modeline bağlam olarak kullanarak daha doğru yanıtlar üretmek için kullanılan bir yöntemdir.
-
-Chat modeli kapatıldı.
+RAG, Retrieval-Augmented Generation anlamına gelir. Önce ilgili bilgi dokümanlardan bulunur, sonra bu bilgi yapay zeka modeline bağlam olarak verilir.
 
 === Kaynaklar ===
 - Dosya: sample_doc.txt | Parça ID: 5 | Benzerlik: 0.852 | Final skor: 0.902
@@ -289,7 +311,7 @@ Başka bir örnek:
 Sorunuzu yazın: Foundry Local ne için kullanılacak?
 
 === Cevap ===
-Foundry Local, yerel yapay zeka modeliyle cevap üretecek Local RAG AI Assistant projesinde kullanılacaktır.
+Foundry Local, yerel yapay zeka modeliyle cevap üretmek için Microsoft Foundry ile birleştirilecek.
 
 === Kaynaklar ===
 - Dosya: project_faq.txt | Parça ID: 3 | Benzerlik: 0.815 | Final skor: 0.915
@@ -302,6 +324,15 @@ Sorunuzu yazın: Türkiye'nin başkenti neresi?
 
 === Cevap ===
 Bu bilgi mevcut dokümanlarda bulunamadı.
+```
+
+Program kapatılırken:
+
+```text
+Sorunuzu yazın: q
+Program kapatıldı.
+Chat modeli kapatıldı.
+Embedding modeli kapatıldı.
 ```
 
 ## Testler
@@ -324,12 +355,19 @@ RAG + LLM cevap üretimi testini çalıştırmak için:
 python foundry_rag_answer_test.py
 ```
 
+Final uygulamayı çalıştırmak için:
+
+```bash
+python foundry_app.py
+```
+
 ## Dosyaların Görevleri
 
 | Dosya                        | Görevi                                                                      |
 | ---------------------------- | --------------------------------------------------------------------------- |
 | `main.py`                    | Basit eğitim sürümünü çalıştırır                                            |
 | `foundry_app.py`             | Final Foundry Local RAG + LLM uygulamasını çalıştırır                       |
+| `foundry_app_fast_test.py`   | Modelleri başta bir kez yükleyen hızlandırılmış test sürümüdür              |
 | `ingest.py`                  | Dokümanları okur ve parçalara böler                                         |
 | `database.py`                | Basit SQLite işlemlerini yapar                                              |
 | `rag.py`                     | Basit vektör benzerliği ile kaynak parça arar                               |
@@ -367,19 +405,21 @@ python foundry_rag_answer_test.py
 - Final etkileşimli Foundry RAG uygulaması oluşturuldu
 - Kaynak gösterme özelliği eklendi
 - Dokümanda olmayan bilgi için uydurmama davranışı test edildi
+- Foundry app hızlandırıldı
+- Modellerin her soruda yeniden yüklenmesi yerine başlangıçta bir kez yüklenmesi sağlandı
+- Program kapanırken modellerin güvenli şekilde kapatılması sağlandı
 
 ## Şu Anki Sınırlamalar
 
 - Yerel LLM bazen Türkçe cümlelerde küçük anlatım bozuklukları yapabilir.
 - Şu anda sadece `.txt` dosyaları destekleniyor.
-- Her soru için embedding ve chat modelleri yeniden yükleniyor; bu işlem yavaş olabilir.
+- İlk açılışta modellerin yüklenmesi biraz zaman alabilir.
 - Cevap kalitesi, bulunan kaynak parçaların kalitesine bağlıdır.
 - Henüz web arayüzü yoktur.
 - PDF ve DOCX desteği henüz eklenmemiştir.
 
 ## Sonraki Hedefler
 
-- Modelleri her soruda yeniden yüklemek yerine açık tutarak hızlandırmak
 - Cevap formatını daha temiz hale getirmek
 - PDF dosyası desteği eklemek
 - DOCX dosyası desteği eklemek
@@ -393,4 +433,4 @@ python foundry_rag_answer_test.py
 
 Local RAG AI Assistant, yerel dokümanlardan bilgi bulup bu bilgileri yerel yapay zeka modeliyle cevap haline getiren bir RAG uygulamasıdır.
 
-Proje eğitim amaçlı basit bir retrieval sistemiyle başlamış, daha sonra Microsoft Foundry Local ile embedding üretimi, SQLite tabanlı vektör saklama, kaynak bulma ve yerel LLM ile cevap üretme aşamalarına kadar geliştirilmiştir.
+Proje eğitim amaçlı basit bir retrieval sistemiyle başlamış, daha sonra Microsoft Foundry Local ile embedding üretimi, SQLite tabanlı vektör saklama, kaynak bulma, yerel LLM ile cevap üretme ve hızlandırılmış model yükleme aşamalarına kadar geliştirilmiştir.
