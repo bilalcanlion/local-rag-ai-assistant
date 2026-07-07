@@ -6,7 +6,7 @@ Local RAG AI Assistant, yerel dokümanlardan bilgi bulabilen ve bu bilgileri yer
 
 Proje ilk olarak eğitim amaçlı basit bir retrieval sistemi olarak başlamıştır. Daha sonra Microsoft Foundry Local kullanılarak gerçek embedding üretimi, SQLite tabanlı vektör saklama, kaynak bulma ve yerel LLM ile cevap üretme aşamalarına kadar geliştirilmiştir.
 
-Final sürümde sistem, kullanıcının sorduğu soruya göre yerel dokümanlar içinden ilgili parçaları bulur, bu parçaları yerel chat modeline bağlam olarak verir ve kısa bir cevap üretir.
+Final sürümde sistem `.txt`, `.pdf` ve `.docx` dosyalarını okuyabilir. Kullanıcının sorduğu soruya göre yerel dokümanlar içinden ilgili parçaları bulur, bu parçaları yerel chat modeline bağlam olarak verir ve kısa bir cevap üretir.
 
 ## 2. Projenin Amacı
 
@@ -14,7 +14,7 @@ Bu projenin amacı, internet bağlantısına ihtiyaç duymadan yerel dokümanlar
 
 Sistem şu hedeflere göre tasarlanmıştır:
 
-- Yerel `.txt` dosyalarını okuyabilmek
+- Yerel `.txt`, `.pdf` ve `.docx` dosyalarını okuyabilmek
 - Dokümanları küçük parçalara ayırmak
 - Doküman parçalarını SQLite veritabanında saklamak
 - Microsoft Foundry Local ile embedding üretmek
@@ -39,6 +39,8 @@ Bu sayede proje, yerel dokümanlara dayalı güvenli ve kaynaklı bir yapay zeka
 | phi-4-mini              | Yerel chat modeli                                          |
 | Cosine similarity       | Soru ve doküman embeddingleri arasındaki benzerliği ölçmek |
 | Query expansion         | Soruları ek anahtar kelimelerle güçlendirmek               |
+| pypdf                   | PDF dosyalarından metin çıkarmak                           |
+| python-docx             | DOCX dosyalarından metin çıkarmak                          |
 | GitHub                  | Versiyon kontrolü ve proje paylaşımı                       |
 
 ## 4. Sistem Mimarisi
@@ -46,7 +48,7 @@ Bu sayede proje, yerel dokümanlara dayalı güvenli ve kaynaklı bir yapay zeka
 Final sistemin genel mimarisi şu şekildedir:
 
 ```text
-Yerel dokümanlar
+Yerel dokümanlar (.txt / .pdf / .docx)
 ↓
 Doküman okuma
 ↓
@@ -77,18 +79,41 @@ Bu yapı sayesinde sistem hem bilgi arama hem de cevap üretme adımlarını tam
 
 Projedeki dokümanlar `data/` klasörü içinde tutulmaktadır.
 
-Örnek veri dosyaları:
+Kullanılan örnek veri dosyaları:
 
 ```text
 data/sample_doc.txt
 data/project_faq.txt
+data/ai_notes.txt
+data/foundry_manual.txt
+data/troubleshooting_faq.txt
+data/docx_support_note.docx
+data/pdf_support_note.pdf
 ```
 
 `ingest.py` dosyası bu dokümanları okur ve paragraflara göre küçük parçalara ayırır.
 
 Dokümanları küçük parçalara ayırmak önemlidir. Çünkü sistem tüm dokümanı tek seferde aramak yerine daha küçük ve anlamlı parçalar üzerinde arama yapar. Böylece kullanıcının sorusuna daha alakalı kaynaklar bulunabilir.
 
-## 6. Basit RAG Sürümü
+## 6. Desteklenen Dosya Türleri
+
+Final sürümde sistem şu dosya türlerini desteklemektedir:
+
+```text
+.txt
+.pdf
+.docx
+```
+
+TXT dosyaları doğrudan okunur.
+
+PDF dosyaları için `pypdf` kütüphanesi kullanılır.
+
+DOCX dosyaları için `python-docx` kütüphanesi kullanılır.
+
+Bu destek sayesinde sistem yalnızca düz metin dosyalarıyla değil, PDF ve Word belgeleriyle de çalışabilir.
+
+## 7. Basit RAG Sürümü
 
 Projenin ilk aşamasında eğitim amaçlı basit bir RAG sistemi oluşturulmuştur.
 
@@ -120,7 +145,7 @@ Cevap olarak gösterilir
 
 Bu sürüm, RAG mantığını öğrenmek için faydalı olmuştur. Ancak kelime sayımı tabanlı olduğu için anlam benzerliğini sınırlı şekilde yakalayabilmiştir.
 
-## 7. Microsoft Foundry Local Entegrasyonu
+## 8. Microsoft Foundry Local Entegrasyonu
 
 Daha sonra projeye Microsoft Foundry Local entegrasyonu eklenmiştir.
 
@@ -142,7 +167,7 @@ Test sonucunda 1024 boyutlu embedding vektörü başarıyla üretilmiştir.
 
 Bu aşama, Foundry Local SDK’nın doğru kurulduğunu ve yerel embedding modelinin çalıştığını göstermiştir.
 
-## 8. Embeddingleri SQLite’a Kaydetme
+## 9. Embeddingleri SQLite’a Kaydetme
 
 Embedding üretimi çalıştıktan sonra doküman parçalarının embeddingleri SQLite veritabanına kaydedilmiştir.
 
@@ -167,7 +192,9 @@ Kaynak dosya adı, içerik ve embedding bilgisini SQLite’a kaydet
 
 Bu yapı sayesinde doküman embeddingleri her soru için yeniden üretilmek zorunda kalmaz. Embeddingler bir kez oluşturulur ve veritabanından tekrar kullanılabilir.
 
-## 9. Stored Embedding Retrieval
+PDF ve DOCX desteği eklendikten sonra sistem 22 doküman parçasını başarıyla işlemiş ve embedding veritabanına kaydetmiştir.
+
+## 10. Stored Embedding Retrieval
 
 Daha sonra SQLite içinde kayıtlı embeddinglerle arama yapılmıştır.
 
@@ -195,15 +222,13 @@ RAG ne demek?
 SQLite ne işe yarar?
 Foundry Local ne için kullanılacak?
 Türkiye'nin başkenti neresi?
+DOCX desteği ne için eklendi?
+PDF desteği ne için eklendi?
 ```
 
-İlk üç soru için doğru kaynak parçaları bulunmuştur. Son soru dokümanlarda olmadığı için sistem cevap uydurmamış ve şu çıktıyı vermiştir:
+Sistem dokümanlarda bulunan sorular için doğru kaynakları bulmuş, dokümanda olmayan soru için ise cevap uydurmamıştır.
 
-```text
-Bu bilgi mevcut dokümanlarda bulunamadı.
-```
-
-## 10. Yerel Chat Modeli Testi
+## 11. Yerel Chat Modeli Testi
 
 Retrieval sistemi çalıştıktan sonra yerel LLM ile cevap üretimi test edilmiştir.
 
@@ -232,7 +257,7 @@ Final chat modeli:
 phi-4-mini
 ```
 
-## 11. RAG + LLM Cevap Üretimi
+## 12. RAG + LLM Cevap Üretimi
 
 Bir sonraki aşamada retrieval ve LLM cevap üretimi birleştirilmiştir.
 
@@ -258,7 +283,7 @@ Kısa cevap üret
 
 Bu aşamada modelin sadece verilen bağlama göre cevap vermesi istenmiştir. Böylece sistemin doküman dışı bilgi uydurma riski azaltılmıştır.
 
-## 12. Final Etkileşimli Uygulama
+## 13. Final Etkileşimli Uygulama
 
 Final uygulama dosyası:
 
@@ -280,6 +305,11 @@ Kullanıcı uygulama açıldıktan sonra sorularını terminal üzerinden sorabi
 RAG ne demek?
 SQLite ne işe yarar?
 Foundry Local ne için kullanılacak?
+Yapay zeka nedir?
+RAG halüsinasyonu nasıl azaltır?
+Foundry veritabanında kayıtlı parça yoksa ne yapmalıyım?
+DOCX desteği ne için eklendi?
+PDF desteği ne için eklendi?
 Türkiye'nin başkenti neresi?
 ```
 
@@ -295,12 +325,12 @@ Final uygulama cevapla birlikte kaynakları da gösterir:
 
 ```text
 === Kaynaklar ===
-- Dosya: sample_doc.txt | Parça ID: 5 | Benzerlik: 0.852 | Final skor: 0.902
+- Dosya: sample_doc.txt | Parça ID: 17 | Benzerlik: 0.852 | Final skor: 0.902
 ```
 
 Bu sayede kullanıcı cevabın hangi doküman parçasına dayandığını görebilir.
 
-## 13. Hızlandırma Çalışması
+## 14. Hızlandırma Çalışması
 
 İlk LLM entegrasyonunda embedding modeli ve chat modeli her soru için yeniden yükleniyordu. Bu durum uygulamayı yavaşlatıyordu.
 
@@ -337,7 +367,58 @@ Embedding modeli kapatıldı.
 
 Bu değişiklik uygulamanın kullanımını daha verimli hale getirmiştir.
 
-## 14. Örnek Çıktılar
+## 15. PDF ve DOCX Desteği
+
+Projede başlangıçta yalnızca `.txt` dosyaları destekleniyordu.
+
+Daha sonra `ingest.py` dosyası güncellenerek `.pdf` ve `.docx` dosyaları da desteklenmiştir.
+
+PDF desteği için:
+
+```text
+pypdf
+```
+
+DOCX desteği için:
+
+```text
+python-docx
+```
+
+kullanılmıştır.
+
+Örnek PDF ve DOCX dosyaları oluşturmak için şu dosya eklenmiştir:
+
+```text
+create_sample_documents.py
+```
+
+Bu dosya şu örnek belgeleri üretir:
+
+```text
+data/docx_support_note.docx
+data/pdf_support_note.pdf
+```
+
+DOCX desteği şu soru ile test edilmiştir:
+
+```text
+DOCX desteği ne için eklendi?
+```
+
+Sistem doğru şekilde `docx_support_note.docx` dosyasını kaynak olarak bulmuştur.
+
+PDF desteği şu soru ile test edilmiştir:
+
+```text
+PDF desteği ne için eklendi?
+```
+
+Sistem doğru şekilde `pdf_support_note.pdf` dosyasını kaynak olarak bulmuştur.
+
+## 16. Örnek Çıktılar
+
+### 16.1 RAG Sorusu
 
 Örnek soru:
 
@@ -355,28 +436,54 @@ Kaynaklar:
 
 ```text
 === Kaynaklar ===
-- Dosya: sample_doc.txt | Parça ID: 5 | Benzerlik: 0.852 | Final skor: 0.902
-- Dosya: sample_doc.txt | Parça ID: 4 | Benzerlik: 0.541 | Final skor: 0.591
+- Dosya: sample_doc.txt | Parça ID: 17 | Benzerlik: 0.852 | Final skor: 0.902
 ```
 
-Başka bir örnek:
+### 16.2 DOCX Sorusu
+
+Örnek soru:
 
 ```text
-Foundry Local ne için kullanılacak?
+DOCX desteği ne için eklendi?
 ```
 
-Cevap:
+Örnek cevap:
 
 ```text
-Foundry Local, yerel yapay zeka modeliyle cevap üretmek için Microsoft Foundry ile birleştirilecek.
+DOCX desteği, Local RAG AI Assistant projesinin Word belgelerini okuyabilmesi için eklendi.
+```
+
+Kaynaklar:
+
+```text
+=== Kaynaklar ===
+- Dosya: docx_support_note.docx | Parça ID: 6 | Benzerlik: 0.606 | Final skor: 0.606
+- Dosya: docx_support_note.docx | Parça ID: 5 | Benzerlik: 0.575 | Final skor: 0.575
+- Dosya: docx_support_note.docx | Parça ID: 7 | Benzerlik: 0.541 | Final skor: 0.541
+```
+
+### 16.3 PDF Sorusu
+
+Örnek soru:
+
+```text
+PDF desteği ne için eklendi?
+```
+
+Örnek cevap:
+
+```text
+PDF desteği, Local RAG AI Assistant projesinin PDF belgelerini okuyabilmesi için eklenmiştir.
 ```
 
 Kaynak:
 
 ```text
 === Kaynaklar ===
-- Dosya: project_faq.txt | Parça ID: 3 | Benzerlik: 0.815 | Final skor: 0.915
+- Dosya: pdf_support_note.pdf | Parça ID: 12 | Benzerlik: 0.636 | Final skor: 1.586
 ```
+
+### 16.4 Dokümanda Olmayan Bilgi
 
 Dokümanda olmayan bilgi örneği:
 
@@ -392,19 +499,19 @@ Bu bilgi mevcut dokümanlarda bulunamadı.
 
 Bu örnek, sistemin dokümanda olmayan bilgiyi uydurmadığını göstermektedir.
 
-## 15. Karşılaşılan Sorunlar
+## 17. Karşılaşılan Sorunlar
 
-### 15.1 Basit vektör sisteminin sınırlı kalması
+### 17.1 Basit vektör sisteminin sınırlı kalması
 
 İlk sürümde kullanılan kelime sayımı tabanlı vektör sistemi, yalnızca benzer kelimeler geçtiğinde iyi çalışıyordu. Farklı kelimelerle sorulan ama anlam olarak benzer sorularda yetersiz kalabiliyordu.
 
-### 15.2 Model kalitesi sorunu
+### 17.2 Model kalitesi sorunu
 
 Bazı küçük chat modelleri doğru veya akıcı cevap veremedi. Özellikle küçük Qwen modelleri bazı testlerde tekrar eden ve bağlamdan kopan cevaplar üretti.
 
 Bu nedenle farklı modeller test edildi ve finalde `phi-4-mini` seçildi.
 
-### 15.3 Singleton hatası
+### 17.3 Singleton hatası
 
 Geliştirme sırasında şu hata ile karşılaşıldı:
 
@@ -416,43 +523,50 @@ Bu hata, FoundryLocalManager’ın aynı program içinde birden fazla kez başla
 
 Çözüm olarak Foundry Local bir kez başlatıldı ve daha sonra aynı manager instance’ı tekrar kullanıldı.
 
-### 15.4 Yavaş model yükleme
+### 17.4 Yavaş model yükleme
 
 İlk denemelerde modeller her soru için tekrar yükleniyordu. Bu durum özellikle yerel LLM kullanımında uygulamayı yavaşlatıyordu.
 
 Çözüm olarak modeller uygulama başında bir kez yüklendi ve program kapanırken kapatıldı.
 
-## 16. Çözümler
+### 17.5 PDF retrieval sorunu
+
+PDF dosyası okunup embedding veritabanına kaydedildiği halde, ilk testte “PDF desteği ne için eklendi?” sorusunda PDF kaynağı üst sıraya çıkmadı.
+
+Bu sorun `expand_query` ve `keyword_bonus` fonksiyonlarına PDF/DOCX odaklı kurallar eklenerek çözüldü.
+
+## 18. Çözümler
 
 Projede karşılaşılan sorunlara şu çözümler uygulanmıştır:
 
-| Sorun                                            | Çözüm                                                |
-| ------------------------------------------------ | ---------------------------------------------------- |
-| Basit kelime benzerliği yetersiz kaldı           | Foundry Local embedding modeline geçildi             |
-| Bazı sorularda doğru parça üst sıraya çıkmadı    | Query expansion ve final skor mantığı eklendi        |
-| Doküman embeddingleri tekrar tekrar üretiliyordu | Embeddingler SQLite’a kaydedildi                     |
-| Küçük chat modelleri kötü cevap verdi            | Farklı modeller test edildi ve `phi-4-mini` seçildi  |
-| FoundryLocalManager singleton hatası alındı      | Manager bir kez başlatılıp tekrar kullanıldı         |
-| Modeller her soruda yeniden yükleniyordu         | Modeller başlangıçta bir kez yüklenir hale getirildi |
+| Sorun                                            | Çözüm                                                                 |
+| ------------------------------------------------ | --------------------------------------------------------------------- |
+| Basit kelime benzerliği yetersiz kaldı           | Foundry Local embedding modeline geçildi                              |
+| Bazı sorularda doğru parça üst sıraya çıkmadı    | Query expansion ve final skor mantığı eklendi                         |
+| Doküman embeddingleri tekrar tekrar üretiliyordu | Embeddingler SQLite’a kaydedildi                                      |
+| Küçük chat modelleri kötü cevap verdi            | Farklı modeller test edildi ve `phi-4-mini` seçildi                   |
+| FoundryLocalManager singleton hatası alındı      | Manager bir kez başlatılıp tekrar kullanıldı                          |
+| Modeller her soruda yeniden yükleniyordu         | Modeller başlangıçta bir kez yüklenir hale getirildi                  |
+| Sadece `.txt` dosyaları destekleniyordu          | `.pdf` ve `.docx` okuma desteği eklendi                               |
+| PDF kaynağı ilk testte üst sıraya çıkmadı        | PDF/DOCX için özel query expansion ve keyword bonus kuralları eklendi |
 
-## 17. Mevcut Sınırlamalar
+## 19. Mevcut Sınırlamalar
 
 Projenin şu anki sınırlamaları şunlardır:
 
-- Şu anda sadece `.txt` dosyaları desteklenmektedir.
-- PDF ve DOCX dosyaları henüz desteklenmemektedir.
 - Yerel LLM bazen Türkçe cümlelerde küçük anlatım bozuklukları yapabilir.
 - İlk açılışta modellerin yüklenmesi biraz zaman alabilir.
 - Cevap kalitesi, dokümanların içeriğine ve bulunan kaynak parçaların kalitesine bağlıdır.
+- PDF desteği metin içeren PDF dosyaları için uygundur.
+- Taranmış görsel PDF dosyaları için OCR desteği yoktur.
 - Henüz web arayüzü bulunmamaktadır.
 - Daha kapsamlı test senaryoları eklenebilir.
 
-## 18. Gelecek Geliştirmeler
+## 20. Gelecek Geliştirmeler
 
 Projeye ileride şu özellikler eklenebilir:
 
-- PDF dosyası desteği
-- DOCX dosyası desteği
+- Taranmış PDF dosyaları için OCR desteği
 - Daha temiz cevap formatı
 - Daha gelişmiş prompt tasarımı
 - Daha fazla test senaryosu
@@ -462,13 +576,14 @@ Projeye ileride şu özellikler eklenebilir:
 - Final sunum dosyası
 - Kullanıcı dostu kurulum yönergeleri
 
-## 19. Sonuç
+## 21. Sonuç
 
 Local RAG AI Assistant projesi, basit bir eğitim prototipinden çalışan bir yerel RAG uygulamasına dönüştürülmüştür.
 
 Final sistem şu özelliklere sahiptir:
 
 - Yerel dokümanları okuyabilir
+- `.txt`, `.pdf` ve `.docx` dosyalarını destekler
 - Dokümanları parçalara ayırabilir
 - Microsoft Foundry Local ile embedding üretebilir
 - Embeddingleri SQLite veritabanında saklayabilir
