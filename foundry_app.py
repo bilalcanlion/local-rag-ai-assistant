@@ -7,8 +7,51 @@ from foundry_embeddings import cosine_similarity
 EMBEDDING_MODEL_NAME = "qwen3-embedding-0.6b"
 CHAT_MODEL_NAME = "phi-4-mini"
 
-
 def expand_query(query):
+    expanded_query = query
+    query_lower = query.lower()
+
+    if "foundry" in query_lower:
+        expanded_query += " Microsoft Foundry Local yerel yapay zeka modeli cevap üretecektir"
+
+    if "sqlite" in query_lower:
+        expanded_query += " SQLite veritabanı doküman parçalarını saklamak"
+
+    if "pdf" in query_lower:
+        expanded_query += " PDF desteği PDF destegi PDF belgelerini okuyabilmesi PDF dosyalarını bilgi kaynağı olarak kullanabilir"
+
+    if "docx" in query_lower or "word" in query_lower:
+        expanded_query += " DOCX desteği Word belgelerini okuyabilmesi DOCX belgelerini bilgi kaynağı olarak kullanabilir"
+
+    if "rag" in query_lower:
+        expanded_query += " Retrieval-Augmented Generation anlamına gelir doküman bilgi bağlam halüsinasyon azaltır"
+
+    if "yapay zeka" in query_lower:
+        expanded_query += " bilgisayar sistemleri insan benzeri görevler metin anlama soru cevaplama sınıflandırma tahmin"
+
+    if "halüsinasyon" in query_lower or "halusinasyon" in query_lower:
+        expanded_query += " kaynak bağlam doküman bilgi uydurma riskini azaltır"
+
+    if "internet" in query_lower or "offline" in query_lower or "çevrimdışı" in query_lower:
+        expanded_query += " internet bağlantısına ihtiyaç duymadan yerel cihaz üzerinde çalışır"
+
+    if (
+        "kayıtlı parça" in query_lower
+        or "kayıtlı doküman" in query_lower
+        or "veritabanında kayıtlı" in query_lower
+        or "parça yoksa" in query_lower
+        or "bulunamadı hatası" in query_lower
+        or "ne yapmalıyım" in query_lower
+    ):
+        expanded_query += " Foundry veritabanında kayıtlı doküman parçası bulunamadı hatası python foundry_ingest_test.py komutu çalıştırılmalıdır troubleshooting faq"
+
+    if "ne demek" in query_lower or "nedir" in query_lower:
+        expanded_query += " anlam tanım açıklama"
+
+    if "ne işe yarar" in query_lower or "ne için" in query_lower:
+        expanded_query += " kullanım amacı görev"
+
+    return expanded_query
     expanded_query = query
     query_lower = query.lower()
 
@@ -68,7 +111,76 @@ def expand_query(query):
     return expanded_query
 
 
-def keyword_bonus(question, content):
+def keyword_bonus(question, content, source=""):
+    question_lower = question.lower()
+    content_lower = content.lower()
+    source_lower = source.lower()
+
+    bonus = 0
+
+    important_words = [
+        "foundry",
+        "local",
+        "microsoft",
+        "sqlite",
+        "rag",
+        "retrieval",
+        "generation",
+        "embedding",
+        "veritabanı",
+        "doküman",
+        "parça",
+        "kayıtlı",
+        "bulunamadı",
+        "hata",
+        "python",
+        "foundry_ingest_test.py",
+        "halüsinasyon",
+        "yapay",
+        "zeka",
+        "internet",
+        "yerel",
+        "pdf",
+        "destegi",
+        "desteği",
+        "docx",
+        "word",
+        "belge",
+        "belgelerini",
+        "dosyalarını",
+    ]
+
+    for word in important_words:
+        if word in question_lower and word in content_lower:
+            bonus += 0.05
+
+    if (
+        "kayıtlı parça" in question_lower
+        or "veritabanında kayıtlı" in question_lower
+        or "parça yoksa" in question_lower
+        or "ne yapmalıyım" in question_lower
+    ) and "foundry_ingest_test.py" in content_lower:
+        bonus += 0.4
+
+    if "halüsinasyon" in question_lower and "halüsinasyon" in content_lower:
+        bonus += 0.2
+
+    if "internet" in question_lower and "internet bağlantısına ihtiyaç duymadan" in content_lower:
+        bonus += 0.2
+
+    if "pdf" in question_lower and "pdf" in content_lower:
+        bonus += 0.3
+
+    if "pdf" in question_lower and source_lower.endswith(".pdf"):
+        bonus += 0.6
+
+    if ("docx" in question_lower or "word" in question_lower) and "docx" in content_lower:
+        bonus += 0.3
+
+    if ("docx" in question_lower or "word" in question_lower) and source_lower.endswith(".docx"):
+        bonus += 0.4
+
+    return bonus
     question_lower = question.lower()
     content_lower = content.lower()
 
@@ -123,6 +235,39 @@ def create_question_embedding(question, embedding_client):
 
 
 def find_top_chunks(question, embedding_client, top_k=3, min_final_score=0.35):
+    chunks = get_all_chunks()
+
+    if not chunks:
+        return []
+
+    question_embedding = create_question_embedding(question, embedding_client)
+
+    results = []
+
+    for chunk in chunks:
+        similarity = cosine_similarity(
+            question_embedding,
+            chunk["embedding"]
+        )
+
+        final_score = similarity + keyword_bonus(
+            question,
+            chunk["content"],
+            chunk["source"]
+        )
+
+        if final_score >= min_final_score:
+            results.append({
+                "id": chunk["id"],
+                "source": chunk["source"],
+                "content": chunk["content"],
+                "similarity": similarity,
+                "final_score": final_score,
+            })
+
+    results.sort(key=lambda item: item["final_score"], reverse=True)
+
+    return results[:top_k]
     chunks = get_all_chunks()
 
     if not chunks:
